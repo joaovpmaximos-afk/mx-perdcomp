@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MX PERDCOMP — Controle de Créditos e Compensações</title>
+<style>
+:root{
+  --bg:#0f1720; --bg2:#16212e; --card:#1b2836; --card2:#213142; --line:#2c3e52;
+  --txt:#e8eef5; --mut:#93a7bd; --mut2:#6d829a;
+  --brand:#2f80ed; --brand2:#1f6fe0; --ok:#27ae60; --okbg:#123021;
+  --warn:#e2a63b; --warnbg:#33280f; --dang:#e05a5a; --dangbg:#331717;
+  --fiscal:#3aa0ff; --fiscalbg:#12283d; --folha:#b07cff; --folhabg:#241a3a;
+  --shadow:0 8px 30px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --bg:#eef2f7; --bg2:#e4ebf3; --card:#ffffff; --card2:#f5f8fc; --line:#dbe4ee;
+  --txt:#16222f; --mut:#5a6b7d; --mut2:#8496a8;
+  --brand:#2f80ed; --brand2:#1f6fe0; --ok:#1f9d55; --okbg:#e4f5ec;
+  --warn:#c98a1a; --warnbg:#fbf1da; --dang:#d84848; --dangbg:#fbe7e7;
+  --fiscal:#1a73e8; --fiscalbg:#e3eefd; --folha:#7d4fd6; --folhabg:#efe6fd;
+  --shadow:0 6px 24px rgba(30,50,80,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--brand)}
+button{font-family:inherit}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* Layout */
+header.top{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.top-in{max-width:1180px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
+.logo .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),#7c5cff);display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:var(--shadow)}
+.logo small{display:block;font-weight:600;color:var(--mut);font-size:11px;letter-spacing:.4px}
+.grow{flex:1}
+.pill{font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mut);display:inline-flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut2)}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(39,174,96,.18)}
+.iconbtn{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 11px;cursor:pointer;font-size:13px;display:inline-flex;gap:7px;align-items:center;transition:.15s}
+.iconbtn:hover{border-color:var(--brand);color:var(--brand)}
+
+nav.tabs{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s}
+nav.tabs button:hover{color:var(--txt)}
+nav.tabs button.active{color:var(--brand);border-color:var(--brand)}
+nav.tabs .badge{font-size:10.5px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:6px;color:var(--mut)}
+
+main{max-width:1180px;margin:0 auto;padding:20px 18px 80px}
+.view{display:none;animation:fade .25s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* Cards */
+.grid{display:grid;gap:14px}
+.g-hero{grid-template-columns:1.4fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:860px){.g-hero,.g4,.g3,.g2{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.g4{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 3px;font-size:13px;color:var(--mut);font-weight:600;letter-spacing:.2px;text-transform:uppercase;font-size:11px}
+.stat{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.stat.sm{font-size:20px}
+.sub{color:var(--mut);font-size:12px;margin-top:3px}
+
+.hero{background:linear-gradient(135deg,#183050,#1a2740);border:1px solid #274763;color:#eaf2ff;position:relative;overflow:hidden}
+:root[data-theme="light"] .hero{background:linear-gradient(135deg,#2f80ed,#5b8def);border-color:#2f80ed;color:#fff}
+.hero .lbl{font-size:12px;opacity:.85;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.hero .big{font-size:44px;font-weight:800;letter-spacing:-1.5px;margin:6px 0 2px;line-height:1}
+@media(max-width:520px){.hero .big{font-size:34px}}
+.hero .note{font-size:12px;opacity:.8;margin-top:8px;max-width:90%}
+.hero .glow{position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.5),transparent 70%);pointer-events:none}
+
+.bar{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;display:flex;margin-top:10px}
+.bar > span{display:block;height:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--mut)}
+.legend b{color:var(--txt)}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle}
+
+/* Tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);font-weight:600;position:sticky;top:0;background:var(--card2);z-index:1}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--card2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.3px}
+.tag.fiscal{background:var(--fiscalbg);color:var(--fiscal)}
+.tag.folha{background:var(--folhabg);color:var(--folha)}
+.tag.ok{background:var(--okbg);color:var(--ok)}
+.tag.warn{background:var(--warnbg);color:var(--warn)}
+.tag.zero{background:var(--card2);color:var(--mut)}
+.num-code{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.chip-link{cursor:pointer;color:var(--brand);text-decoration:underline dotted;font-size:12px}
+
+.rowbtns{display:flex;gap:6px}
+.mini{background:var(--card2);border:1px solid var(--line);color:var(--mut);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:12px}
+.mini:hover{color:var(--brand);border-color:var(--brand)}
+.mini.del:hover{color:var(--dang);border-color:var(--dang)}
+
+/* Toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .grow{min-width:120px}
+input,select,textarea{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 11px;font-size:13.5px;outline:none;width:100%;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11.5px;color:var(--mut);font-weight:600}
+.seg{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{background:none;border:none;color:var(--mut);padding:8px 13px;cursor:pointer;font-size:12.5px;font-weight:600}
+.seg button.active{background:var(--brand);color:#fff}
+.btn{background:var(--brand);color:#fff;border:none;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:13.5px;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+.btn:hover{background:var(--brand2)}
+.btn.ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn.danger{background:var(--dang)}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(6,12,20,.62);backdrop-filter:blur(3px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:30px 14px;overflow-y:auto}
+.overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:680px;animation:pop .2s ease}
+.modal.wide{max-width:900px}
+@keyframes pop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+.modal header{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal header h2{margin:0;font-size:16px}
+.modal .body{padding:20px;max-height:70vh;overflow-y:auto}
+.modal footer{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.x{margin-left:auto;background:none;border:none;color:var(--mut);font-size:22px;cursor:pointer;line-height:1}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.formgrid .full{grid-column:1/-1}
+@media(max-width:560px){.formgrid{grid-template-columns:1fr}}
+
+.deb-row{display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}
+@media(max-width:560px){.deb-row{grid-template-columns:1fr 1fr}}
+.deb-row .mini{padding:9px 11px}
+
+.empty{text-align:center;color:var(--mut);padding:40px 20px}
+.empty .em{font-size:34px;opacity:.5}
+
+.callout{border-radius:11px;padding:12px 14px;font-size:12.5px;display:flex;gap:10px;align-items:flex-start}
+.callout.info{background:var(--fiscalbg);color:var(--fiscal);border:1px solid var(--fiscal)}
+.callout.warn{background:var(--warnbg);color:var(--warn);border:1px solid var(--warn)}
+.callout.ok{background:var(--okbg);color:var(--ok);border:1px solid var(--ok)}
+.callout b{color:var(--txt)}
+
+.anexos{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.anexo-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px}
+.anexo-chip .an-open{cursor:pointer;color:var(--brand);display:inline-flex;gap:5px;align-items:center}
+.anexo-chip .an-open:hover{text-decoration:underline}
+.anexo-chip .an-del{cursor:pointer;color:var(--mut2);font-weight:700}
+.anexo-chip .an-del:hover{color:var(--dang)}
+.clip{font-size:11px;color:var(--mut);margin-left:5px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:10px;padding:12px 18px;box-shadow:var(--shadow);z-index:200;opacity:0;transition:.3s;font-size:13.5px;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{border-left-color:var(--dang)}
+
+.detail-chain{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.chain-node{display:flex;align-items:center;gap:10px;padding:8px 0}
+.chain-node .n{font-variant-numeric:tabular-nums;font-size:12.5px}
+.chain-arrow{color:var(--mut2);padding-left:6px;font-size:11px}
+kbd{background:var(--card2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:11px;font-family:inherit}
+.help-list{margin:8px 0 0;padding-left:18px;color:var(--mut);font-size:13px}
+.help-list li{margin:5px 0}
+footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mut2);font-size:11.5px;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">
+      <div class="mark">MX</div>
+      <div>PERDCOMP<small>Controle de créditos &amp; compensações</small></div>
+    </div>
+    <div class="grow"></div>
+    <span class="pill" id="empresaPill">🏢 <span id="empresaNome">DF CAMPOS</span></span>
+    <span class="pill" id="modePill"><span class="dot" id="modeDot"></span><span id="modeTxt">Local</span></span>
+    <button class="iconbtn" id="btnTheme" title="Tema claro/escuro">🌓</button>
+    <button class="iconbtn" id="btnConfig" title="Conexão / configurações">⚙️</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="painel" class="active">📊 Painel</button>
+    <button data-tab="creditos">💰 Créditos <span class="badge" id="bCred">0</span></button>
+    <button data-tab="compensacoes">🔗 Compensações <span class="badge" id="bComp">0</span></button>
+    <button data-tab="ajuda">❔ Como usar</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===================== PAINEL ===================== -->
+  <section class="view active" id="view-painel">
+    <div class="grid g-hero" style="margin-bottom:14px">
+      <div class="card hero">
+        <div class="glow"></div>
+        <div class="lbl">Saldo disponível para PERDCOMP</div>
+        <div class="big mono" id="heroSaldo">R$ 0,00</div>
+        <div class="note" id="heroNote">Soma dos saldos vivos de cada cadeia de DCOMP (último saldo registrado, já com SELIC quando informada) + créditos ainda não utilizados.</div>
+      </div>
+      <div class="card">
+        <h3>Próximo nº a utilizar</h3>
+        <div class="stat sm mono" id="proxNumero" style="font-size:15px;word-break:break-all">—</div>
+        <div class="sub" id="proxInfo">Último número resultante gerado na cadeia.</div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="btnNovaComp">+ Compensação</button>
+          <button class="btn ghost" id="btnNovoCred">+ Crédito</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="card"><h3>Crédito gerado</h3><div class="stat mono" id="kGerado">R$ 0</div><div class="sub">Soma dos saldos credores originais</div></div>
+      <div class="card"><h3>Débitos lançados</h3><div class="stat mono" id="kUsado">R$ 0</div><div class="sub" id="kUsadoSub">0 compensações</div></div>
+      <div class="card"><h3>Uso Fiscal</h3><div class="stat mono" style="color:var(--fiscal)" id="kFiscal">R$ 0</div><div class="sub" id="kFiscalSub">0 lançamentos</div></div>
+      <div class="card"><h3>Uso Folha</h3><div class="stat mono" style="color:var(--folha)" id="kFolha">R$ 0</div><div class="sub" id="kFolhaSub">0 lançamentos</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3>Consumo do crédito</h3>
+      <div class="bar" id="consBar"></div>
+      <div class="legend" id="consLegend"></div>
+    </div>
+
+    <div id="alertas"></div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3>De onde sai o saldo (cadeias vivas)</h3>
+      <div class="sub" style="margin-bottom:10px">Cada linha é um número de PER/DCOMP em aberto com saldo, ou um crédito que ainda não entrou em nenhuma compensação. É daqui que a folha e o fiscal devem puxar.</div>
+      <div class="tablewrap">
+        <table id="tblVivas"><thead><tr>
+          <th>Origem</th><th>Nº a utilizar</th><th class="num">Saldo</th><th>Última mov.</th><th></th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <h3 style="margin:0">Últimas movimentações</h3>
+        <div class="grow"></div>
+        <button class="mini" onclick="go('compensacoes')">ver todas →</button>
+      </div>
+      <div class="tablewrap">
+        <table id="tblUltimas"><thead><tr>
+          <th>Data</th><th>Departamento</th><th>Descrição</th><th class="num">Valor</th><th>Nº resultante</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CREDITOS ===================== -->
+  <section class="view" id="view-creditos">
+    <div class="toolbar">
+      <div class="field grow"><input id="fCred" placeholder="🔎 Buscar por competência ou nº PER/DCOMP…"></div>
+      <button class="btn" id="btnNovoCred2">+ Novo crédito</button>
+    </div>
+    <div class="tablewrap">
+      <table id="tblCred"><thead><tr>
+        <th>Competência</th><th class="num">Saldo credor original</th><th>Nº PER/DCOMP inicial</th>
+        <th class="num">Saldo disponível</th><th>Situação</th><th></th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="sub" style="margin-top:10px">Crédito <b>Em cadeia</b> = o PER dele já entrou em compensação; o saldo vivo aparece no painel, na tabela "De onde sai o saldo". <b>Não utilizado</b> = ainda ninguém tocou (vale o valor original, ou o saldo manual com SELIC se informado).</div>
+  </section>
+
+  <!-- ===================== COMPENSACOES ===================== -->
+  <section class="view" id="view-compensacoes">
+    <div class="toolbar">
+      <div class="seg" id="segDep">
+        <button data-dep="TODOS" class="active">Todos</button>
+        <button data-dep="FISCAL">Fiscal</button>
+        <button data-dep="FOLHA">Folha</button>
+      </div>
+      <div class="field grow"><input id="fComp" placeholder="🔎 Buscar descrição, DARF ou nº DCOMP…"></div>
+      <button class="btn" id="btnNovaComp2">+ Nova compensação</button>
+    </div>
+    <div class="tablewrap">
+      <table id="tblComp"><thead><tr>
+        <th>Data</th><th>Depto</th><th>Descrição / débitos</th><th>Compet.</th>
+        <th class="num">Valor</th><th>Nº inicial → resultante</th><th class="num">Saldo após</th><th></th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- ===================== AJUDA ===================== -->
+  <section class="view" id="view-ajuda">
+    <div class="card" style="max-width:820px">
+      <h3>Por que este sistema existe</h3>
+      <p style="color:var(--mut);font-size:13.5px">O crédito federal é usado em <b>cadeia</b>: cada PER/DCOMP consome parte do crédito e o que sobra gera um <b>novo número resultante</b>, que vira o inicial da próxima compensação. Como a <b>Folha</b> e o <b>Fiscal</b> puxam do mesmo crédito em momentos diferentes, a planilha compartilhada gerava desencontro. Aqui todos veem <b>o mesmo saldo vivo</b> e a <b>trilha de quem usou o quê</b>.</p>
+      <h3 style="margin-top:18px">Fluxo do dia a dia</h3>
+      <ul class="help-list">
+        <li><b>Apurou crédito no mês?</b> → aba <b>Créditos</b> → <kbd>+ Novo crédito</kbd> (competência, valor, nº PER inicial).</li>
+        <li><b>Vai usar o crédito (folha ou fiscal)?</b> → <kbd>+ Nova compensação</kbd>: escolha o departamento, lance os débitos, escolha o <b>nº inicial</b> na lista de números vivos, informe o <b>nº resultante</b> gerado e o <b>saldo após</b> que o e-CAC mostrou. Esse saldo vira o valor vivo da cadeia.</li>
+        <li><b>Quer saber quanto ainda tem?</b> → o número grande no <b>Painel</b> = soma das cadeias vivas + créditos não utilizados. A tabela <b>“De onde sai o saldo”</b> mostra exatamente de quais números o valor vem.</li>
+        <li><b>Qual número declarar agora?</b> → card <b>“Próximo nº a utilizar”</b> (a cadeia viva de maior saldo) ou qualquer linha da tabela de cadeias.</li>
+        <li><b>Por que não é “gerado menos usado”?</b> → o crédito rende SELIC e alguns débitos são quitados só em parte; o valor confiável é o <b>saldo após</b> do último elo de cada corrente, como no e-CAC.</li>
+      </ul>
+      <h3 style="margin-top:18px">Modo compartilhado (Supabase)</h3>
+      <p style="color:var(--mut);font-size:13.5px">Clique em <b>⚙️</b> e informe a URL e a chave <i>anon</i> do projeto Supabase. A partir daí folha e fiscal editam a <b>mesma base em tempo real</b>. Sem configurar, o app funciona em <b>modo local</b> (neste navegador) já com os dados da DF CAMPOS.</p>
+      <div class="callout info" style="margin-top:8px">ℹ️ Rode <kbd>?teste=1</kbd> na URL para executar o autoteste dos cálculos.</div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">MX PERDCOMP · MAXIMOS Soluções Empresariais · dados carregados da planilha <b>CONTROLE DE COMPENSAÇÕES DF CAMPOS</b> (aba COMPENSAÇÕES, até 22/06/2026)</footer>
+
+<!-- ============ MODAL: COMPENSAÇÃO ============ -->
+<div class="overlay" id="ovComp">
+  <div class="modal wide"><header><h2 id="compTitle">Nova compensação</h2><button class="x" data-close>×</button></header>
+    <div class="body">
+      <div class="formgrid">
+        <div class="field"><label>Data da transmissão</label><input type="date" id="cData"></div>
+        <div class="field"><label>Competência do débito</label><input id="cComp" placeholder="ex.: 2026-05 ou 13/2025"></div>
+        <div class="field"><label>Departamento</label>
+          <div class="seg" id="cDepSeg" style="width:100%">
+            <button data-v="FISCAL" class="active" style="flex:1">Fiscal</button>
+            <button data-v="FOLHA" style="flex:1">Folha</button>
+          </div>
+        </div>
+        <div class="field"><label>Crédito de origem (opcional)</label>
+          <select id="cCredito"><option value="">— pool geral —</option></select>
+        </div>
+        <div class="field full"><label>Descrição do evento</label><input id="cDesc" placeholder="ex.: PIS/COFINS abril/2026"></div>
+      </div>
+
+      <div style="margin:16px 0 6px;font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Débitos compensados</div>
+      <div id="debList"></div>
+      <button class="mini" id="btnAddDeb" style="margin-top:4px">+ adicionar débito</button>
+      <div style="text-align:right;margin-top:8px;font-size:13px">Total dos débitos: <b class="mono" id="debTotal">R$ 0,00</b></div>
+
+      <div class="formgrid" style="margin-top:16px">
+        <div class="field"><label>Nº DCOMP inicial (usado) — escolha um nº vivo</label><input id="cIni" list="dlVivos" placeholder="00000.00000.000000.0.0.00-0000"><datalist id="dlVivos"></datalist></div>
+        <div class="field"><label>Nº DCOMP resultante (gerado)</label><input id="cRes" placeholder="deixe vazio se zerou o crédito"></div>
+        <div class="field"><label>Saldo do crédito após (opcional, c/ SELIC)</label><input id="cSaldo" placeholder="R$" inputmode="decimal"></div>
+        <div class="field"><label>Responsável</label><input id="cUser" placeholder="seu nome / setor"></div>
+        <div class="field full"><label>Observação</label><textarea id="cObs" rows="2" placeholder="retificações, vínculos, etc."></textarea></div>
+        <div class="field full"><label>Anexos — comprovante DCOMP, PDF/imagem</label>
+          <div id="compAnexos" class="anexos"></div>
+          <label class="mini" style="cursor:pointer;display:inline-block">📎 anexar arquivo<input type="file" id="compFile" accept="application/pdf,image/*" hidden multiple></label>
+        </div>
+      </div>
+      <div id="compWarn"></div>
+    </div>
+    <footer>
+      <button class="btn ghost" data-close>Cancelar</button>
+      <button class="btn" id="btnSaveComp">Salvar compensação</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ============ MODAL: CRÉDITO ============ -->
+<div class="overlay" id="ovCred">
+  <div class="modal"><header><h2 id="credTitle">Novo crédito</h2><button class="x" data-close>×</button></header>
+    <div class="body">
+      <div class="formgrid">
+        <div class="field"><label>Competência</label><input id="rComp" placeholder="AAAA-MM ex.: 2026-05"></div>
+        <div class="field"><label>Saldo credor original (R$)</label><input id="rValor" inputmode="decimal" placeholder="0,00"></div>
+        <div class="field full"><label>Nº PER/DCOMP inicial</label><input id="rPerd" placeholder="00000.00000.000000.0.0.00-0000"></div>
+        <div class="field"><label>Última data utilizada</label><input type="date" id="rData"></div>
+        <div class="field"><label>Saldo disponível atual (opcional, c/ SELIC)</label><input id="rSaldoManual" inputmode="decimal" placeholder="deixe vazio p/ calcular"></div>
+        <div class="field full"><label>Observação</label><textarea id="rObs" rows="2"></textarea></div>
+        <div class="field full"><label>Anexos — comprovante PER, PDF/imagem</label>
+          <div id="credAnexos" class="anexos"></div>
+          <label class="mini" style="cursor:pointer;display:inline-block">📎 anexar arquivo<input type="file" id="credFile" accept="application/pdf,image/*" hidden multiple></label>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <button class="btn ghost" data-close>Cancelar</button>
+      <button class="btn" id="btnSaveCred">Salvar crédito</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ============ MODAL: DETALHE COMP ============ -->
+<div class="overlay" id="ovDet">
+  <div class="modal"><header><h2>Detalhe da compensação</h2><button class="x" data-close>×</button></header>
+    <div class="body" id="detBody"></div>
+    <footer><button class="btn ghost" data-close>Fechar</button></footer>
+  </div>
+</div>
+
+<!-- ============ MODAL: CONFIG ============ -->
+<div class="overlay" id="ovCfg">
+  <div class="modal"><header><h2>Conexão &amp; dados</h2><button class="x" data-close>×</button></header>
+    <div class="body">
+      <div class="callout info" style="margin-bottom:14px">🔗 <div><b>Modo compartilhado (Supabase):</b> preencha para que folha e fiscal usem a mesma base em tempo real. Vazio = modo local neste navegador.</div></div>
+      <div class="formgrid">
+        <div class="field full"><label>Supabase URL</label><input id="sbUrl" placeholder="https://xxxx.supabase.co"></div>
+        <div class="field full"><label>Supabase anon key</label><input id="sbKey" placeholder="eyJhbGciOi..."></div>
+        <div class="field full"><label>Empresa (rótulo)</label><input id="sbEmpresa" placeholder="DF CAMPOS"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn" id="btnSaveCfg">Conectar</button>
+        <button class="btn ghost" id="btnLocalMode">Usar modo local</button>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+      <div style="font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Dados</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" id="btnExportJson">⬇ Exportar JSON</button>
+        <button class="btn ghost" id="btnExportCsv">⬇ Exportar CSV (Excel)</button>
+        <button class="btn ghost" id="btnPrint">🖨 Imprimir / PDF</button>
+        <button class="btn ghost" id="btnReseed">↻ Recarregar dados DF CAMPOS</button>
+        <label class="btn ghost" style="cursor:pointer">⬆ Importar JSON<input type="file" id="fileImport" accept="application/json" hidden></label>
+      </div>
+    </div>
+    <footer><button class="btn ghost" data-close>Fechar</button></footer>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   MX PERDCOMP — app single-file
+   Modo local (localStorage) + modo compartilhado (Supabase)
+   ============================================================ */
+"use strict";
+
+/* ---------- SEED: dados da DF CAMPOS ---------- */
+var SEED = {"empresa":"DF CAMPOS","gerado_em":"2026-07-14","fonte":"CONTROLE DE COMPENSACOES DF CAMPOS.xlsx (aba COMPENSACOES, 22/06/2026)","creditos":[{"id":"C01","competencia":"2026-08","valor_original":22402.5,"perd_inicial":"07459.44083.081222.1.3.15-0615","ultima_data":null},{"id":"C02","competencia":"2026-01","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C03","competencia":"2026-02","valor_original":15765.21,"perd_inicial":"01235.18047.100325.1.3.15-9676","ultima_data":null},{"id":"C04","competencia":"2026-03","valor_original":52932.05,"perd_inicial":"33060.50388.090525.1.3.15-4155","ultima_data":null},{"id":"C05","competencia":"2026-04","valor_original":13783.06,"perd_inicial":"39829.07392.110226.1.3.15-3600","ultima_data":null},{"id":"C06","competencia":"2026-05","valor_original":0,"perd_inicial":"42779.15396.220626.1.3.15-1025","ultima_data":null},{"id":"C07","competencia":"2026-06","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C08","competencia":"2026-07","valor_original":39769.47,"perd_inicial":"17375.54243.220825.1.3.15-4990","ultima_data":null},{"id":"C09","competencia":"2026-08","valor_original":43095.09,"perd_inicial":"41611.25637.120925.1.3.15-4540","ultima_data":null},{"id":"C10","competencia":"2026-09","valor_original":73469.91,"perd_inicial":"39490.07400.151025.1.3.15-7880","ultima_data":null},{"id":"C11","competencia":"2026-10","valor_original":22188.64,"perd_inicial":"14074.48805.121125.1.3.15-3806","ultima_data":null},{"id":"C12","competencia":"2026-11","valor_original":42454.23,"perd_inicial":"30927.18256.151225.1.3.15-1325","ultima_data":null},{"id":"C13","competencia":"2026-12","valor_original":35537.88,"perd_inicial":"05788.24955.130126.1.3.15-6514","ultima_data":null},{"id":"C14","competencia":"2026-01","valor_original":21166.16,"perd_inicial":"32488.53540.110226.1.3.15-2700","ultima_data":null},{"id":"C15","competencia":"2026-02","valor_original":9414.55,"perd_inicial":"41173.10498.180326.1.3.15-6502","ultima_data":null},{"id":"C16","competencia":"2026-03","valor_original":33903.69,"perd_inicial":"01694.07014.150426.1.3.15-2082","ultima_data":null},{"id":"C17","competencia":"2026-04","valor_original":51766.17,"perd_inicial":"33575.54118.180526.1.3.15-2439","ultima_data":null},{"id":"C18","competencia":"2026-05","valor_original":128150.84,"perd_inicial":"42779.15396.220626.1.3.15-1025","ultima_data":null},{"id":"C19","competencia":"2026-06","valor_original":13494.96,"perd_inicial":null,"ultima_data":null}],"compensacoes":[{"data":"2023-12-01","competencia_debito":"2023-12","departamento":"FISCAL","descricao":"COFINS","debitos":[{"descricao":"COFINS","darf":"2172-01-01 00:00:00","valor":8616.99},{"descricao":"CSLL","darf":"2372-01-01 00:00:00","valor":12736.86},{"descricao":"IRPJ","darf":"2089-01-01 00:00:00","valor":14597.77},{"descricao":"PIS","darf":"8109-02-01 00:00:00","valor":1867.01}],"valor_total":37818.63,"dcomp_inicial":"07478.54752.171224.1.7.15-0291","dcomp_resultante":"13159.52477.171224.1.7.15-3225","saldo_apos":10723.46,"obs":null,"inis_internos":["07478.54752.171224.1.7.15-0291"]},{"data":"2025-04-16","competencia_debito":"2025-03","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02-01 00:00:00","valor":1055.73},{"descricao":"COFINS","darf":"2172-01-01 00:00:00","valor":4872.6},{"descricao":"IRPJ 1º quota 1º Trimestre","darf":"2089-01-01 00:00:00","valor":20606.19},{"descricao":"CSLL 1º quota 1º Trimestre","darf":"2372-01-01 00:00:00","valor":6668.2},{"descricao":"CSLL 1º quota 1º Trimestre","darf":"2372-01-01 00:00:00","valor":1346.41}],"valor_total":34549.13,"dcomp_inicial":"28412.63264.070425.1.3.15-6779","dcomp_resultante":"07898.68641.160425.1.7.15-8727","saldo_apos":0.0,"obs":null,"inis_internos":["28412.63264.070425.1.3.15-6779","07459.44083.081222.1.3.15-0615","33529.45651.160425.1.3.15-8830"]},{"data":"2025-05-09","competencia_debito":"2025-04","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02-01 00:00:00","valor":1658.48},{"descricao":"COFINS","darf":"2172-01-01 00:00:00","valor":7654.53}],"valor_total":9313.01,"dcomp_inicial":"33060.50388.090525.1.3.15-4155","dcomp_resultante":"33506.64130.140525.1.3.15-0698","saldo_apos":43195.38,"obs":null,"inis_internos":["33060.50388.090525.1.3.15-4155"]},{"data":"2025-05-14","competencia_debito":"2025-03","departamento":"FISCAL","descricao":"IRPJ 2º quota 1º Trimestre","debitos":[{"descricao":"IRPJ 2º quota 1º Trimestre","darf":"2089-01-01 00:00:00","valor":20812.25},{"descricao":"CSLL 2º quota 1º Trimestre","darf":"2372-01-01 00:00:00","valor":8219.6},{"descricao":"INSS","darf":"FOLHA","valor":11674.69},{"descricao":"IRRF FOLHA","darf":"0561-07","valor":442.73}],"valor_total":41149.27,"dcomp_inicial":"33506.64130.140525.1.3.15-0698","dcomp_resultante":"15537.93029.180625.1.7.15-2283","saldo_apos":2342.83,"obs":null,"inis_internos":["33506.64130.140525.1.3.15-0698","25828.76010.140525.1.3.15-2990","31290.84410.180625.1.7.15-5973"]},{"data":null,"competencia_debito":"2025-05","departamento":"FOLHA","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02-01 00:00:00","valor":3755.37},{"descricao":"INSS - RETENÇÃO","darf":"1162-01","valor":610.5}],"valor_total":4365.87,"dcomp_inicial":"15537.93029.180625.1.7.15-2283","dcomp_resultante":"03196.16076.180625.1.3.15-6460","saldo_apos":0.0,"obs":null,"inis_internos":["15537.93029.180625.1.7.15-2283","03196.16076.180625.1.3.15-6460"]},{"data":"2025-09-12","competencia_debito":"2025-08","departamento":"FOLHA","descricao":"IRRF FOLHA","debitos":[{"descricao":"IRRF FOLHA","darf":"0561-07","valor":915.36}],"valor_total":915.36,"dcomp_inicial":"41611.25637.120925.1.3.15-4540","dcomp_resultante":null,"saldo_apos":0.0,"obs":null,"inis_internos":["41611.25637.120925.1.3.15-4540"]},{"data":"2025-10-15","competencia_debito":"2025-09","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1649.68},{"descricao":"PIS E COFINS","darf":"8109/2172","valor":9754.99},{"descricao":"IR E CSLL","darf":"2089/2372","valor":143844.51}],"valor_total":155249.18,"dcomp_inicial":"39490.07400.151025.1.3.15-7880","dcomp_resultante":"06764.90033.161025.1.3.15-6913","saldo_apos":0.0,"obs":null,"inis_internos":["39490.07400.151025.1.3.15-7880","39490.07400.151025.1.3.15-7880","00709.90149.161025.1.3.15-1222"]},{"data":"2025-11-12","competencia_debito":"2025-10","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1531.56},{"descricao":"PIS E COFINS","darf":"8109/2172","valor":36547.07}],"valor_total":38078.63,"dcomp_inicial":"14074.48805.121125.1.3.15-3806","dcomp_resultante":"41703.63990.241125.1.3.15-3824","saldo_apos":0.0,"obs":null,"inis_internos":["14074.48805.121125.1.3.15-3806","14074.48805.121125.1.3.15-3806"]},{"data":"2025-12-15","competencia_debito":"2025-11","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1044.86},{"descricao":"","darf":"8109","valor":7514.22},{"descricao":"","darf":"2172","valor":20938.11}],"valor_total":29497.19,"dcomp_inicial":"30927.18256.151225.1.3.15-1325","dcomp_resultante":"17639.70372.190126.1.7.15-0078","saldo_apos":0.0,"obs":null,"inis_internos":["30927.18256.151225.1.3.15-1325","38415.38814.191225.1.7.15-0525","00721.65114.191225.1.3.15-9642"]},{"data":"2025-12-15","competencia_debito":"13/2025","departamento":"FOLHA","descricao":"INSS - FOLHA","debitos":[{"descricao":"INSS - FOLHA","darf":"","valor":12929.23}],"valor_total":12929.23,"dcomp_inicial":"30927.18256.151225.1.3.15-1325","dcomp_resultante":"03687.56522.151225.1.3.15-7550","saldo_apos":28480.14,"obs":null,"inis_internos":["30927.18256.151225.1.3.15-1325"]},{"data":"2026-01-13","competencia_debito":"2025-12","departamento":"FISCAL","descricao":"Compensacao 2025-12","debitos":[{"descricao":"","darf":"0561-07","valor":1996.07},{"descricao":"","darf":"2172/8109/5952","valor":33541.81}],"valor_total":35537.88,"dcomp_inicial":"05788.24955.130126.1.3.15-6514","dcomp_resultante":"19231.10174.190126.1.3.15-7033","saldo_apos":0.0,"obs":null,"inis_internos":["05788.24955.130126.1.3.15-6514"]},{"data":"2026-02-11","competencia_debito":"2025-05","departamento":"FOLHA","descricao":"Correção per/dcomp errado de maio","debitos":[{"descricao":"Correção per/dcomp errado de maio","darf":"1138-01","valor":9226.5},{"descricao":"","darf":"1138-04","valor":1293.7},{"descricao":"","darf":"1646-01","valor":1383.98},{"descricao":"","darf":"1099-01","valor":711.54},{"descricao":"","darf":"1170-01","valor":1153.31},{"descricao":"","darf":"1200-01","valor":276.79},{"descricao":"","darf":"1225-01","valor":1153.31}],"valor_total":15199.13,"dcomp_inicial":"39829.07392.110226.1.3.15-3600","dcomp_resultante":null,"saldo_apos":0.0,"obs":null,"inis_internos":["39829.07392.110226.1.3.15-3600"]},{"data":"2026-02-11","competencia_debito":"2025-05","departamento":"FOLHA","descricao":"CP SEGURADOS - EMP","debitos":[{"descricao":"CP SEGURADOS - EMP","darf":"1082-01","valor":135.4},{"descricao":"CP TERCEIROS - INCRA","darf":"1176-01","valor":92.25}],"valor_total":227.65,"dcomp_inicial":"32488.53540.110226.1.3.15-2700","dcomp_resultante":null,"saldo_apos":20938.51,"obs":null,"inis_internos":["32488.53540.110226.1.3.15-2700"]},{"data":"2026-02-11","competencia_debito":"2025-06","departamento":"FOLHA","descricao":"CP PATRONAL - EMP","debitos":[{"descricao":"CP PATRONAL - EMP","darf":"1138-01","valor":4953.09},{"descricao":"CP PATRONAL - CONT","darf":"1138-04","valor":1280.9},{"descricao":"CP PATRONAL - GILRAT","darf":"1646-01","valor":1921.14},{"descricao":"CP TERCEIROS - SAL","darf":"1170-01","valor":1600.94},{"descricao":"CP TERCEIROS - INCRA","darf":"1176-01","valor":128.07},{"descricao":"CP TERCEIROS - SEBRAE","darf":"1200-01","valor":384.22},{"descricao":"CP TERCEIROS - SESCOOP","darf":"1225-01","valor":1600.94}],"valor_total":11869.3,"dcomp_inicial":"32488.53540.110226.1.3.15-2700","dcomp_resultante":"32431.47938.110226.1.3.15-4328","saldo_apos":9069.21,"obs":"RET - gerou nº 10343.38561.240226.1.7.15-1852","inis_internos":["32488.53540.110226.1.3.15-2700"]},{"data":"2026-02-11","competencia_debito":"2025-06","departamento":"FISCAL","descricao":"IRRF","debitos":[{"descricao":"IRRF","darf":"0561-07","valor":539.52}],"valor_total":539.52,"dcomp_inicial":"32431.47938.110226.1.3.15-4328","dcomp_resultante":"42085.57221.110226.1.3.15-8890","saldo_apos":8529.69,"obs":"RET - gerou nº 23604.37653.240226.1.7.15-1526","inis_internos":["32431.47938.110226.1.3.15-4328"]},{"data":"2026-02-24","competencia_debito":"2026-01","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02-01 00:00:00","valor":7540.97}],"valor_total":7540.97,"dcomp_inicial":"42085.57221.110226.1.3.15-8890","dcomp_resultante":"01986.30366.240226.1.3.15-0400","saldo_apos":988.72,"obs":null,"inis_internos":["42085.57221.110226.1.3.15-8890"]},{"data":"2026-03-18","competencia_debito":"2026-02","departamento":"FISCAL","descricao":"IRRF","debitos":[{"descricao":"IRRF","darf":"0561-07","valor":108.66}],"valor_total":108.66,"dcomp_inicial":null,"dcomp_resultante":"41173.10498.180326.1.3.15-6502","saldo_apos":9305.89,"obs":null,"inis_internos":[]},{"data":"2026-04-15","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"PIS/COFINS","debitos":[{"descricao":"PIS/COFINS","darf":"8109/2172","valor":9398.95}],"valor_total":9398.95,"dcomp_inicial":"41173.10498.180326.1.3.15-6502","dcomp_resultante":"33880.53422.150426.1.3.15-4824","saldo_apos":0.0,"obs":null,"inis_internos":["41173.10498.180326.1.3.15-6502"]},{"data":"2026-04-15","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"COFINS","debitos":[{"descricao":"COFINS","darf":"2172","valor":15072.67}],"valor_total":15072.67,"dcomp_inicial":null,"dcomp_resultante":"01694.07014.150426.1.3.15-2082","saldo_apos":24964.23,"obs":null,"inis_internos":[]},{"data":"2026-04-15","competencia_debito":"1º QUOTA 1º TRIM/26","departamento":"FISCAL","descricao":"CSLL","debitos":[{"descricao":"CSLL","darf":"2372","valor":1010.57}],"valor_total":1010.57,"dcomp_inicial":"01986.30366.240226.1.3.15-0400","dcomp_resultante":"30550.02806.150426.1.3.15-1729","saldo_apos":0.0,"obs":null,"inis_internos":["01986.30366.240226.1.3.15-0400"]},{"data":"2026-04-15","competencia_debito":"1º QUOTA 1º TRIM/26","departamento":"FISCAL","descricao":"CSLL","debitos":[{"descricao":"CSLL","darf":"2372","valor":24964.23}],"valor_total":24964.23,"dcomp_inicial":"01694.07014.150426.1.3.15-2082","dcomp_resultante":"30034.15214.150426.1.3.15-5218","saldo_apos":0.0,"obs":null,"inis_internos":["01694.07014.150426.1.3.15-2082"]},{"data":"2026-05-18","competencia_debito":"2026-04","departamento":"FISCAL","descricao":"PIS/COFINS","debitos":[{"descricao":"PIS/COFINS","darf":"8109/2172","valor":27012.65}],"valor_total":27012.65,"dcomp_inicial":null,"dcomp_resultante":"33575.54118.180526.1.3.15-2439","saldo_apos":24751.3,"obs":null,"inis_internos":[]},{"data":"2026-05-18","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"IRPJ","debitos":[{"descricao":"IRPJ","darf":"2089","valor":77077.26}],"valor_total":77077.26,"dcomp_inicial":"33575.54118.180526.1.3.15-2439","dcomp_resultante":"05837.87606.180526.1.3.15-7448","saldo_apos":2.48,"obs":"Perd-comp retificado nº 04928.00957.180526.1.7.15-0382","inis_internos":["33575.54118.180526.1.3.15-2439"]},{"data":"2026-06-22","competencia_debito":"2026-05","departamento":"FISCAL","descricao":"Pis e Cofins","debitos":[{"descricao":"Pis e Cofins","darf":"8109/2172","valor":20362.6}],"valor_total":20362.6,"dcomp_inicial":null,"dcomp_resultante":"42779.15396.220626.1.3.15-1025","saldo_apos":107788.24,"obs":null,"inis_internos":[]},{"data":"2026-06-22","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"IR e CSLL 3º quota 1º trimestre","debitos":[{"descricao":"IR e CSLL 3º quota 1º trimestre","darf":"2089/2372","valor":105167.92}],"valor_total":105167.92,"dcomp_inicial":"42779.15396.220626.1.3.15-1025","dcomp_resultante":"24017.71489.220626.1.3.15-6391","saldo_apos":2620.32,"obs":null,"inis_internos":["42779.15396.220626.1.3.15-1025"]}],"evidencias":["00709.90149.161025.1.3.15-1222","00721.65114.191225.1.3.15-9642","01235.18047.100325.1.3.15-9676","01694.07014.150426.1.3.15-2082","01928.62656.120625.1.3.15-7695","01986.30366.240226.1.3.15-0400","02536.88152.180325.1.3.15-0886","03196.16076.180625.1.3.15-6460","03687.56522.151225.1.3.15-7550","05788.24955.130126.1.3.15-6514","07459.44083.081222.1.3.15-0615","07478.54752.171224.1.7.15-0291","08575.42871.120625.1.3.15-7549","14074.48805.121125.1.3.15-3806","15537.93029.180625.1.7.15-2283","17375.54243.220825.1.3.15-4990","25828.76010.140525.1.3.15-2990","28412.63264.070425.1.3.15-6779","30927.18256.151225.1.3.15-1325","31024.01844.220925.1.3.15-4025","31290.84410.180625.1.7.15-5973","32431.47938.110226.1.3.15-4328","32488.53540.110226.1.3.15-2700","33060.50388.090525.1.3.15-4155","33506.64130.140525.1.3.15-0698","33529.45651.160425.1.3.15-8830","33575.54118.180526.1.3.15-2439","38415.38814.191225.1.7.15-0525","39490.07400.151025.1.3.15-7880","39829.07392.110226.1.3.15-3600","41173.10498.180326.1.3.15-6502","41611.25637.120925.1.3.15-4540","42085.57221.110226.1.3.15-8890","42779.15396.220626.1.3.15-1025"],"conferencia":{"total_gerado":619294.41,"total_debitos":714955.46,"disponivel_esperado":26841.22,"cadeias_vivas":3,"creditos_nao_usados":1}};
+
+/* ---------- Estado ---------- */
+var LS_KEY='mxperdcomp_v2'; // v2: base da aba COMPENSACOES completa + motor de cadeias (cache v1 tinha base incompleta)
+var CFG_KEY='mxperdcomp_cfg_v1';
+var state={empresa:'DF CAMPOS', creditos:[], compensacoes:[]};
+var cfg={url:'',key:'',empresa:'DF CAMPOS'};
+var sb=null;            // cliente supabase
+var online=false;
+var filtro={dep:'TODOS'};
+var editComp=null, editCred=null;
+
+/* ---------- Utils ---------- */
+function $(s,el){return (el||document).querySelector(s);}
+function $all(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));}
+function uid(p){return (p||'x')+Math.random().toString(36).slice(2,9);}
+function BRL(n){n=Number(n)||0;return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function BRLk(n){n=Number(n)||0;if(Math.abs(n)>=1000)return 'R$ '+(n/1000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'k';return BRL(n);}
+function parseNum(v){if(v==null)return 0;if(typeof v==='number')return v;v=(''+v).replace(/[R$\s.]/g,'').replace(',','.');var n=parseFloat(v);return isNaN(n)?0:n;}
+function fmtData(d){if(!d)return '—';var p=(''+d).split('-');if(p.length===3)return p[2]+'/'+p[1]+'/'+p[0];return d;}
+function fmtComp(c){if(!c)return '—';if(/^\d{4}-\d{2}$/.test(c)){var p=c.split('-');var m=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];return m[+p[1]-1]+'/'+p[0];}return c;}
+function esc(s){return (s==null?'':''+s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function toast(msg,err){var t=$('#toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(function(){t.className='toast';},2600);}
+
+/* ---------- Cálculos ---------- */
+function compTotal(c){ if(typeof c.valor_total==='number')return c.valor_total; return (c.debitos||[]).reduce(function(s,d){return s+(Number(d.valor)||0);},0); }
+function totalGerado(){return state.creditos.reduce(function(s,c){return s+(Number(c.valor_original)||0);},0);}
+function totalUsado(){return state.compensacoes.reduce(function(s,c){return s+compTotal(c);},0);}
+function usadoDep(dep){return state.compensacoes.filter(function(c){return c.departamento===dep;}).reduce(function(s,c){return s+compTotal(c);},0);}
+function saldoPool(){return totalGerado()-totalUsado();}
+function usadoDoCredito(id){return state.compensacoes.filter(function(c){return c.credito_id===id;}).reduce(function(s,c){return s+compTotal(c);},0);}
+function saldoCredito(cr){
+  if(cr.saldo_manual!=null && cr.saldo_manual!=='') return Number(cr.saldo_manual);
+  return (Number(cr.valor_original)||0)-usadoDoCredito(cr.id);
+}
+/* ---------- Cadeias: o crédito é consumido em corrente (inicial → resultante).
+   O saldo real disponível é o "saldo após" do ÚLTIMO elo de cada corrente ainda
+   em aberto, mais os créditos que nunca entraram em compensação. Isso reflete a
+   SELIC (o saldo registrado já vem atualizado) e a quitação parcial de débitos,
+   que o modelo "gerado - usado" não captura. ---------- */
+function ordKey(c,i){return (c.data||'9999-12-31')+'|'+('000000'+i).slice(-6);}
+function cadeiasVivas(){
+  var cs=state.compensacoes, evid=state.evidencias||[];
+  var out=[];
+  for(var i=0;i<cs.length;i++){
+    var c=cs[i]; var s=Number(c.saldo_apos);
+    if(c.saldo_apos==null||c.saldo_apos===''||isNaN(s)||s<=0.005) continue;
+    var res=c.dcomp_resultante||null, ini=c.dcomp_inicial||null;
+    var sup=false;
+    for(var j=0;j<cs.length&&!sup;j++){
+      if(i===j) continue;
+      var d=cs[j];
+      if(res && (d.dcomp_inicial===res || (d.inis_internos||[]).indexOf(res)>=0)) sup=true;           // alguém consumiu o nº resultante
+      else if(ini && d.dcomp_inicial===ini && ordKey(d,j)>ordKey(c,i)) sup=true;                       // mesmo nº inicial usado depois
+    }
+    if(!sup && res && evid.indexOf(res)>=0) sup=true;                                                  // consumido conforme registro do e-CAC
+    if(!sup) out.push(c);
+  }
+  out.sort(function(a,b){return Number(b.saldo_apos)-Number(a.saldo_apos);});
+  return out;
+}
+function numerosUsados(){
+  var s={};
+  state.compensacoes.forEach(function(c){
+    if(c.dcomp_inicial)s[c.dcomp_inicial]=1;
+    if(c.dcomp_resultante)s[c.dcomp_resultante]=1;
+    (c.inis_internos||[]).forEach(function(n){s[n]=1;});
+  });
+  (state.evidencias||[]).forEach(function(n){s[n]=1;});
+  return s;
+}
+function creditosNaoUsados(){
+  var used=numerosUsados();
+  return state.creditos.filter(function(cr){
+    var v=(cr.saldo_manual!=null&&cr.saldo_manual!=='')?Number(cr.saldo_manual):(Number(cr.valor_original)||0);
+    if(v<=0.005) return false;
+    return !cr.perd_inicial || !used[cr.perd_inicial];
+  });
+}
+function valorCreditoLivre(cr){return (cr.saldo_manual!=null&&cr.saldo_manual!=='')?Number(cr.saldo_manual):(Number(cr.valor_original)||0);}
+function saldoDisponivel(){
+  var t=0;
+  cadeiasVivas().forEach(function(c){t+=Number(c.saldo_apos);});
+  creditosNaoUsados().forEach(function(cr){t+=valorCreditoLivre(cr);});
+  return t;
+}
+function proximoNumero(){
+  var v=cadeiasVivas();
+  if(!v.length) return null;
+  return {num:v[0].dcomp_resultante||v[0].dcomp_inicial, saldo:Number(v[0].saldo_apos), de:v[0], total:v.length};
+}
+function mesesParado(dataStr){
+  if(!dataStr) return null;
+  var p=dataStr.split('-'); if(p.length<2) return null;
+  var hoje=new Date();
+  return (hoje.getFullYear()-parseInt(p[0],10))*12 + (hoje.getMonth()+1-parseInt(p[1],10));
+}
+
+/* ---------- Persistência local ---------- */
+function saveLocal(){ if(!online) localStorage.setItem(LS_KEY,JSON.stringify(state)); }
+function loadLocal(){
+  var raw=localStorage.getItem(LS_KEY);
+  if(raw){try{state=JSON.parse(raw);}catch(e){seedState();}}
+  else seedState();
+  if(!state.creditos)state.creditos=[]; if(!state.compensacoes)state.compensacoes=[];
+  if(!state.evidencias)state.evidencias=[];
+}
+function seedState(){
+  state={empresa:SEED.empresa,creditos:[],compensacoes:[],evidencias:(SEED.evidencias||[]).slice()};
+  SEED.creditos.forEach(function(c){ state.creditos.push({id:uid('c'),competencia:c.competencia,valor_original:c.valor_original,perd_inicial:c.perd_inicial,ultima_data:c.ultima_data,saldo_manual:null,obs:null}); });
+  SEED.compensacoes.forEach(function(c){
+    state.compensacoes.push({id:uid('d'),data:c.data,competencia_debito:c.competencia_debito,departamento:c.departamento,descricao:c.descricao,
+      debitos:(c.debitos||[]).map(function(d){return {descricao:d.descricao,darf:d.darf,valor:d.valor};}),
+      valor_total:c.valor_total,dcomp_inicial:c.dcomp_inicial,dcomp_resultante:c.dcomp_resultante,saldo_apos:c.saldo_apos,
+      inis_internos:(c.inis_internos||[]).slice(),credito_id:null,usuario:'importado',obs:c.obs,criado_em:c.data});
+  });
+}
+
+/* ---------- Supabase ---------- */
+function loadCfg(){ var raw=localStorage.getItem(CFG_KEY); if(raw){try{cfg=JSON.parse(raw);}catch(e){}} }
+function saveCfg(){ localStorage.setItem(CFG_KEY,JSON.stringify(cfg)); }
+function loadSbLib(cb){
+  if(window.supabase){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onload=cb; s.onerror=function(){toast('Falha ao carregar biblioteca Supabase (sem internet?)',true);};
+  document.head.appendChild(s);
+}
+function connectSupabase(cb){
+  loadSbLib(function(){
+    try{
+      sb=window.supabase.createClient(cfg.url,cfg.key);
+      online=true;
+      fetchRemote(function(ok){
+        setModeUI();
+        if(ok){toast('Conectado ao Supabase');}
+        cb&&cb(ok);
+      });
+    }catch(e){toast('Erro ao conectar: '+e.message,true);cb&&cb(false);}
+  });
+}
+function fetchRemote(cb){
+  if(!sb){cb&&cb(false);return;}
+  sb.from('perdcomp_creditos').select('*').eq('empresa',cfg.empresa).then(function(r1){
+    if(r1.error){toast('Supabase: '+r1.error.message,true);cb&&cb(false);return;}
+    sb.from('perdcomp_compensacoes').select('*').eq('empresa',cfg.empresa).then(function(r2){
+      if(r2.error){toast('Supabase: '+r2.error.message,true);cb&&cb(false);return;}
+      state.creditos=(r1.data||[]).map(mapCredFromDb);
+      state.compensacoes=(r2.data||[]).map(mapCompFromDb);
+      sb.from('perdcomp_config').select('*').eq('empresa',cfg.empresa).then(function(r3){
+        state.evidencias=(!r3.error&&r3.data&&r3.data[0]&&r3.data[0].evidencias)||[];
+        cb&&cb(true);
+      });
+    });
+  });
+}
+function mapCredFromDb(r){return {id:r.id,competencia:r.competencia,valor_original:r.valor_original,perd_inicial:r.perd_inicial,ultima_data:r.ultima_data,saldo_manual:r.saldo_manual,obs:r.obs,anexos:r.anexos||[]};}
+function mapCompFromDb(r){return {id:r.id,data:r.data,competencia_debito:r.competencia_debito,departamento:r.departamento,descricao:r.descricao,debitos:r.debitos||[],valor_total:r.valor_total,dcomp_inicial:r.dcomp_inicial,dcomp_resultante:r.dcomp_resultante,saldo_apos:r.saldo_apos,inis_internos:r.inis_internos||[],credito_id:r.credito_id,usuario:r.usuario,obs:r.obs,anexos:r.anexos||[],criado_em:r.criado_em};}
+
+function upsertCredRemote(cr){ if(!online)return Promise.resolve(); var o={id:cr.id,empresa:cfg.empresa,competencia:cr.competencia,valor_original:cr.valor_original,perd_inicial:cr.perd_inicial,ultima_data:cr.ultima_data||null,saldo_manual:cr.saldo_manual===''?null:cr.saldo_manual,obs:cr.obs,anexos:cr.anexos||[]}; return sb.from('perdcomp_creditos').upsert(o); }
+function upsertCompRemote(c){ if(!online)return Promise.resolve(); var o={id:c.id,empresa:cfg.empresa,data:c.data||null,competencia_debito:c.competencia_debito,departamento:c.departamento,descricao:c.descricao,debitos:c.debitos,valor_total:c.valor_total,dcomp_inicial:c.dcomp_inicial,dcomp_resultante:c.dcomp_resultante,saldo_apos:c.saldo_apos,inis_internos:c.inis_internos||[],credito_id:c.credito_id,usuario:c.usuario,obs:c.obs,anexos:c.anexos||[],criado_em:c.criado_em}; return sb.from('perdcomp_compensacoes').upsert(o); }
+function delCredRemote(id){ if(!online)return Promise.resolve(); return sb.from('perdcomp_creditos').delete().eq('id',id); }
+function delCompRemote(id){ if(!online)return Promise.resolve(); return sb.from('perdcomp_compensacoes').delete().eq('id',id); }
+
+/* ---------- Navegação ---------- */
+function go(tab){
+  $all('#tabs button').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab);});
+  $all('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+tab);});
+  window.scrollTo(0,0);
+}
+
+/* ---------- Render Painel ---------- */
+function renderPainel(){
+  var ger=totalGerado(), usa=totalUsado(), disp=saldoDisponivel();
+  var vivas=cadeiasVivas(), livres=creditosNaoUsados();
+  $('#heroSaldo').textContent=BRL(disp);
+  $('#kGerado').textContent=BRLk(ger);
+  $('#kUsado').textContent=BRLk(usa);
+  $('#kUsadoSub').textContent=state.compensacoes.length+' compensações (débitos podem incluir SELIC/quitação parcial)';
+  var fis=usadoDep('FISCAL'), fol=usadoDep('FOLHA');
+  $('#kFiscal').textContent=BRLk(fis);
+  $('#kFolha').textContent=BRLk(fol);
+  $('#kFiscalSub').textContent=state.compensacoes.filter(function(c){return c.departamento==='FISCAL';}).length+' lançamentos';
+  $('#kFolhaSub').textContent=state.compensacoes.filter(function(c){return c.departamento==='FOLHA';}).length+' lançamentos';
+
+  // barra: participação de cada depto nos débitos lançados
+  var tot=(fis+fol)||1;
+  var pf=Math.max(0,fis/tot*100), pl=Math.max(0,fol/tot*100);
+  $('#consBar').innerHTML='<span style="width:'+pf+'%;background:var(--fiscal)"></span><span style="width:'+pl+'%;background:var(--folha)"></span>';
+  $('#consLegend').innerHTML=
+    '<span><span class="sw" style="background:var(--fiscal)"></span>Fiscal <b>'+BRL(fis)+'</b></span>'+
+    '<span><span class="sw" style="background:var(--folha)"></span>Folha <b>'+BRL(fol)+'</b></span>'+
+    '<span><span class="sw" style="background:var(--ok)"></span>Disponível hoje <b>'+BRL(disp)+'</b></span>';
+
+  // proximo numero = cadeia viva com maior saldo
+  var pn=proximoNumero();
+  $('#proxNumero').textContent=pn?pn.num:'—';
+  $('#proxInfo').textContent=pn?('Saldo '+BRL(pn.saldo)+' · '+esc(pn.de.descricao||'')+(pn.total>1?' · +'+(pn.total-1)+' outra(s) cadeia(s) viva(s)':'')) :
+    (livres.length?'Nenhuma cadeia aberta — use o PER do próximo crédito.':'Nenhum número em aberto.');
+
+  // tabela "de onde sai o saldo"
+  var rows='';
+  vivas.forEach(function(c){
+    var num=c.dcomp_resultante||c.dcomp_inicial;
+    var mp=mesesParado(c.data);
+    var alertTag=(mp!=null&&mp>=6)?' <span class="tag warn">parado '+mp+'m</span>':'';
+    rows+='<tr><td>'+esc(c.descricao||'')+' <span class="sub">('+fmtComp(c.competencia_debito)+')</span></td>'+
+      '<td class="num-code">'+esc(num||'—')+'</td>'+
+      '<td class="num mono"><b>'+BRL(c.saldo_apos)+'</b></td>'+
+      '<td>'+fmtData(c.data)+alertTag+'</td>'+
+      '<td><button class="mini" onclick="openDet(\''+c.id+'\')">ver</button></td></tr>';
+  });
+  livres.forEach(function(cr){
+    rows+='<tr><td>Crédito '+fmtComp(cr.competencia)+' <span class="tag ok">não utilizado</span></td>'+
+      '<td class="num-code">'+esc(cr.perd_inicial||'aguardando 1º PER')+'</td>'+
+      '<td class="num mono"><b>'+BRL(valorCreditoLivre(cr))+'</b></td>'+
+      '<td>—</td><td><button class="mini" onclick="openCred(\''+cr.id+'\')">ver</button></td></tr>';
+  });
+  $('#tblVivas tbody').innerHTML=rows||'<tr><td colspan="5" class="empty">Nenhuma cadeia viva — saldo zerado.</td></tr>';
+
+  // alertas
+  var al=[];
+  vivas.forEach(function(c){
+    var mp=mesesParado(c.data);
+    if(mp!=null&&mp>=6) al.push({t:'warn',h:'⚠️ Cadeia <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'')+') com saldo de <b>'+BRL(c.saldo_apos)+'</b> está parada há '+mp+' meses ('+fmtData(c.data)+'). Confirme no e-CAC se esse saldo ainda vale; se não, edite a compensação e zere o "saldo após".'});
+  });
+  var semNum=state.compensacoes.filter(function(c){return !c.dcomp_inicial&&!c.dcomp_resultante;}).length;
+  if(semNum) al.push({t:'info',h:'ℹ️ '+semNum+' compensação(ões) sem nº de DCOMP informado.'});
+  if(!al.length) al.push({t:'ok',h:'✓ '+vivas.length+' cadeia(s) viva(s) e '+livres.length+' crédito(s) sem uso. Disponível: <b>'+BRL(disp)+'</b>.'});
+  $('#alertas').innerHTML=al.map(function(a){return '<div class="callout '+a.t+'" style="margin-bottom:14px">'+a.h+'</div>';}).join('');
+
+  // ultimas
+  var cs=state.compensacoes.slice().sort(function(a,b){return (b.data||'').localeCompare(a.data||'');}).slice(0,6);
+  $('#tblUltimas tbody').innerHTML=cs.length?cs.map(function(c){
+    return '<tr><td>'+fmtData(c.data)+'</td><td><span class="tag '+(c.departamento==='FOLHA'?'folha':'fiscal')+'">'+c.departamento+'</span></td>'+
+      '<td>'+esc(c.descricao||'')+'</td><td class="num mono">'+BRL(compTotal(c))+'</td>'+
+      '<td class="num-code">'+esc(c.dcomp_resultante||'—')+'</td></tr>';
+  }).join(''):'<tr><td colspan="5" class="empty">Sem movimentações</td></tr>';
+
+  $('#bCred').textContent=state.creditos.length;
+  $('#bComp').textContent=state.compensacoes.length;
+}
+
+/* ---------- Render Créditos ---------- */
+function renderCreditos(){
+  var q=($('#fCred').value||'').toLowerCase();
+  var list=state.creditos.slice().sort(function(a,b){return (a.competencia||'').localeCompare(b.competencia||'');});
+  list=list.filter(function(c){return !q || (c.competencia||'').toLowerCase().indexOf(q)>=0 || (c.perd_inicial||'').toLowerCase().indexOf(q)>=0;});
+  var tb=$('#tblCred tbody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="6" class="empty"><div class="em">💰</div>Nenhum crédito</td></tr>';$('#bCred').textContent=state.creditos.length;return;}
+  var used=numerosUsados();
+  tb.innerHTML=list.map(function(c){
+    var vo=Number(c.valor_original)||0;
+    var emCadeia=!!(c.perd_inicial&&used[c.perd_inicial]);
+    var manual=(c.saldo_manual!=null&&c.saldo_manual!=='');
+    var sit,cls,salTxt;
+    if(vo<=0&&!manual){sit='Não sobrou';cls='zero';salTxt='—';}
+    else if(emCadeia){sit='Em cadeia';cls='warn';salTxt='<span class="sub">ver cadeias no painel</span>';}
+    else {sit='Não utilizado';cls='ok';salTxt=BRL(valorCreditoLivre(c))+(manual?' *':'');}
+    return '<tr>'+
+      '<td><b>'+fmtComp(c.competencia)+'</b>'+anexosBadge(c)+'</td>'+
+      '<td class="num mono">'+BRL(vo)+'</td>'+
+      '<td class="num-code">'+esc(c.perd_inicial||'—')+'</td>'+
+      '<td class="num mono" '+(manual?'title="saldo informado manualmente (com SELIC)"':'')+'>'+salTxt+'</td>'+
+      '<td><span class="tag '+cls+'">'+sit+'</span></td>'+
+      '<td><div class="rowbtns"><button class="mini" onclick="openCred(\''+c.id+'\')">editar</button><button class="mini del" onclick="delCred(\''+c.id+'\')">✕</button></div></td>'+
+    '</tr>';
+  }).join('');
+  $('#bCred').textContent=state.creditos.length;
+}
+
+/* ---------- Render Compensações ---------- */
+function renderCompensacoes(){
+  var q=($('#fComp').value||'').toLowerCase();
+  var list=state.compensacoes.slice().sort(function(a,b){return (b.data||'').localeCompare(a.data||'');});
+  if(filtro.dep!=='TODOS') list=list.filter(function(c){return c.departamento===filtro.dep;});
+  list=list.filter(function(c){
+    if(!q)return true;
+    var hay=(c.descricao||'')+' '+(c.dcomp_inicial||'')+' '+(c.dcomp_resultante||'')+' '+(c.debitos||[]).map(function(d){return d.descricao+' '+d.darf;}).join(' ');
+    return hay.toLowerCase().indexOf(q)>=0;
+  });
+  var tb=$('#tblComp tbody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" class="empty"><div class="em">🔗</div>Nenhuma compensação</td></tr>';return;}
+  tb.innerHTML=list.map(function(c){
+    var deb=(c.debitos||[]).length;
+    var resumo=(c.debitos||[]).slice(0,3).map(function(d){return esc(d.descricao||d.darf);}).join(', ')+(deb>3?' +'+(deb-3):'');
+    var cadeia=esc(c.dcomp_inicial||'—')+' <span class="chain-arrow">→</span> '+esc(c.dcomp_resultante||'zerou');
+    return '<tr>'+
+      '<td>'+fmtData(c.data)+'</td>'+
+      '<td><span class="tag '+(c.departamento==='FOLHA'?'folha':'fiscal')+'">'+c.departamento+'</span></td>'+
+      '<td><span class="chip-link" onclick="openDet(\''+c.id+'\')">'+esc(c.descricao||'(sem título)')+'</span>'+anexosBadge(c)+'<div class="sub">'+resumo+'</div></td>'+
+      '<td>'+fmtComp(c.competencia_debito)+'</td>'+
+      '<td class="num mono">'+BRL(compTotal(c))+'</td>'+
+      '<td class="num-code">'+cadeia+'</td>'+
+      '<td class="num mono">'+(c.saldo_apos!=null?BRL(c.saldo_apos):'—')+'</td>'+
+      '<td><div class="rowbtns"><button class="mini" onclick="openComp(\''+c.id+'\')">editar</button><button class="mini del" onclick="delComp(\''+c.id+'\')">✕</button></div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function renderAll(){renderPainel();renderCreditos();renderCompensacoes();}
+
+/* ---------- Detalhe ---------- */
+function openDet(id){
+  var c=state.compensacoes.filter(function(x){return x.id===id;})[0]; if(!c)return;
+  var debs=(c.debitos||[]).map(function(d){return '<tr><td>'+esc(d.descricao||'')+'</td><td class="num-code">'+esc(d.darf||'')+'</td><td class="num mono">'+BRL(d.valor)+'</td></tr>';}).join('');
+  $('#detBody').innerHTML=
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><span class="tag '+(c.departamento==='FOLHA'?'folha':'fiscal')+'">'+c.departamento+'</span><b>'+esc(c.descricao||'')+'</b><span class="grow"></span><span class="sub">'+fmtData(c.data)+'</span></div>'+
+    '<div class="tablewrap" style="margin-bottom:14px"><table style="min-width:auto"><thead><tr><th>Débito</th><th>DARF</th><th class="num">Valor</th></tr></thead><tbody>'+debs+
+      '<tr><td colspan="2" style="text-align:right"><b>Total</b></td><td class="num mono"><b>'+BRL(compTotal(c))+'</b></td></tr></tbody></table></div>'+
+    '<div class="detail-chain">'+
+      '<div class="chain-node"><span class="sub" style="width:120px">Nº inicial usado</span><span class="n mono">'+esc(c.dcomp_inicial||'—')+'</span></div>'+
+      '<div class="chain-node"><span class="sub" style="width:120px">Nº resultante</span><span class="n mono">'+esc(c.dcomp_resultante||'— (zerou o crédito)')+'</span></div>'+
+      '<div class="chain-node"><span class="sub" style="width:120px">Saldo após (SELIC)</span><span class="n mono">'+(c.saldo_apos!=null?BRL(c.saldo_apos):'—')+'</span></div>'+
+      '<div class="chain-node"><span class="sub" style="width:120px">Competência</span><span class="n">'+fmtComp(c.competencia_debito)+'</span></div>'+
+      '<div class="chain-node"><span class="sub" style="width:120px">Responsável</span><span class="n">'+esc(c.usuario||'—')+'</span></div>'+
+    '</div>'+
+    (c.obs?'<div class="callout info" style="margin-top:12px">📝 '+esc(c.obs)+'</div>':'')+
+    ((c.anexos&&c.anexos.length)?'<div style="margin-top:12px"><div class="sub" style="margin-bottom:6px">Anexos</div><div class="anexos">'+c.anexos.map(function(a){return '<span class="anexo-chip"><span class="an-open" onclick="anexoOpen(\''+a.id+'\')">'+anexoIcon(a.type)+' '+esc(a.name)+'</span><span class="sub">'+human(a.size)+'</span></span>';}).join('')+'</div></div>':'');
+  show('#ovDet');
+}
+
+/* ---------- Anexos (IndexedDB local / Supabase Storage online) ---------- */
+var BUCKET='perdcomp-anexos';
+var _idb=null;
+function idb(cb){
+  if(_idb){cb(_idb);return;}
+  var r=indexedDB.open('mxperdcomp_files',1);
+  r.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains('files'))db.createObjectStore('files',{keyPath:'id'});};
+  r.onsuccess=function(e){_idb=e.target.result;cb(_idb);};
+  r.onerror=function(){toast('IndexedDB indisponível',true);};
+}
+function idbPut(rec,cb){idb(function(db){var t=db.transaction('files','readwrite');t.objectStore('files').put(rec);t.oncomplete=function(){cb&&cb();};});}
+function idbGet(id,cb){idb(function(db){var t=db.transaction('files','readonly');var q=t.objectStore('files').get(id);q.onsuccess=function(){cb(q.result);};q.onerror=function(){cb(null);};});}
+function idbDel(id){idb(function(db){db.transaction('files','readwrite').objectStore('files').delete(id);});}
+
+var pendingAnexos={comp:[],cred:[]};
+function human(b){b=Number(b)||0;if(b<1024)return b+' B';if(b<1048576)return Math.round(b/1024)+' KB';return (b/1048576).toFixed(1)+' MB';}
+function anexoIcon(t){t=t||'';return t.indexOf('pdf')>=0?'📄':t.indexOf('image')>=0?'🖼️':'📎';}
+function anexosRender(ctx){
+  var box=$('#'+(ctx==='comp'?'compAnexos':'credAnexos'));
+  var list=pendingAnexos[ctx]||[];
+  box.innerHTML=list.length?list.map(function(a){
+    return '<span class="anexo-chip"><span class="an-open" onclick="anexoOpen(\''+a.id+'\')">'+anexoIcon(a.type)+' '+esc(a.name)+'</span><span class="sub">'+human(a.size)+'</span><span class="an-del" onclick="anexoRemove(\''+ctx+'\',\''+a.id+'\')">✕</span></span>';
+  }).join(''):'<span class="sub">Nenhum anexo.</span>';
+}
+function anexoAddFiles(ctx,files){
+  Array.prototype.slice.call(files).forEach(function(f){
+    if(f.size>25*1048576){toast(f.name+': máx. 25 MB',true);return;}
+    var id=uid('f');
+    var meta={id:id,name:f.name,size:f.size,type:f.type,storage:online?'sb':'idb'};
+    if(online){
+      var path=(cfg.empresa||'DF CAMPOS').replace(/\s+/g,'_')+'/'+id+'_'+f.name.replace(/[^\w.\-]/g,'_');
+      meta.path=path;
+      sb.storage.from(BUCKET).upload(path,f,{upsert:true,contentType:f.type||'application/octet-stream'}).then(function(r){
+        if(r.error){toast('Upload: '+r.error.message,true);return;}
+        pendingAnexos[ctx].push(meta);anexosRender(ctx);toast('Anexo enviado');
+      });
+    }else{
+      idbPut({id:id,name:f.name,type:f.type,blob:f},function(){pendingAnexos[ctx].push(meta);anexosRender(ctx);toast('Anexo salvo');});
+    }
+  });
+}
+function anexoRemove(ctx,id){
+  pendingAnexos[ctx]=(pendingAnexos[ctx]||[]).filter(function(a){return a.id!==id;});
+  anexosRender(ctx);
+  idbGet(id,function(r){if(r)idbDel(id);}); // limpa cópia local se houver
+}
+function findAnexo(id){
+  var pools=[pendingAnexos.comp,pendingAnexos.cred];
+  for(var p=0;p<pools.length;p++){var m=(pools[p]||[]).filter(function(a){return a.id===id;})[0];if(m)return m;}
+  var recs=state.compensacoes.concat(state.creditos),found=null;
+  recs.forEach(function(r){(r.anexos||[]).forEach(function(a){if(a.id===id)found=a;});});
+  return found;
+}
+function anexoOpen(id){
+  var meta=findAnexo(id);
+  if(!meta){toast('Anexo não encontrado',true);return;}
+  if(meta.storage==='sb'&&meta.path){
+    if(!sb){toast('Conecte ao Supabase para abrir este anexo',true);return;}
+    sb.storage.from(BUCKET).createSignedUrl(meta.path,3600).then(function(r){
+      if(r.error){toast('Erro: '+r.error.message,true);return;}
+      window.open(r.data.signedUrl,'_blank');
+    });
+  }else{
+    idbGet(id,function(rec){
+      if(!rec||!rec.blob){toast('Arquivo local não encontrado (foi anexado em outro navegador?)',true);return;}
+      window.open(URL.createObjectURL(rec.blob),'_blank');
+    });
+  }
+}
+function anexosBadge(r){var n=(r.anexos||[]).length;return n?'<span class="clip">📎'+n+'</span>':'';}
+
+/* ---------- Modal helpers ---------- */
+function show(sel){$(sel).classList.add('show');}
+function hide(sel){$(sel).classList.remove('show');}
+function fillCreditosSelect(){
+  var sel=$('#cCredito');var cur=sel.value;
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+state.creditos.slice().sort(function(a,b){return (a.competencia||'').localeCompare(b.competencia||'');}).map(function(c){
+    return '<option value="'+c.id+'">'+fmtComp(c.competencia)+' · '+BRL(c.valor_original)+' original</option>';
+  }).join('');
+  sel.value=cur;
+}
+
+/* ---------- Débitos dinâmicos ---------- */
+function debRow(d){
+  d=d||{descricao:'',darf:'',valor:''};
+  var wrap=document.createElement('div');wrap.className='deb-row';
+  wrap.innerHTML='<div class="field"><label>Descrição</label><input class="d-desc" value="'+esc(d.descricao)+'" placeholder="COFINS, INSS…"></div>'+
+    '<div class="field"><label>DARF</label><input class="d-darf" value="'+esc(d.darf)+'" placeholder="2172-01"></div>'+
+    '<div class="field"><label>Valor</label><input class="d-val mono" value="'+(d.valor!==''&&d.valor!=null?d.valor:'')+'" inputmode="decimal" placeholder="0,00"></div>'+
+    '<button class="mini del" title="remover">✕</button>';
+  wrap.querySelector('.mini').onclick=function(){wrap.remove();recalcDeb();};
+  wrap.querySelector('.d-val').addEventListener('input',recalcDeb);
+  return wrap;
+}
+function recalcDeb(){
+  var t=0;$all('#debList .d-val').forEach(function(i){t+=parseNum(i.value);});
+  $('#debTotal').textContent=BRL(t);
+}
+function collectDebs(){
+  return $all('#debList .deb-row').map(function(r){
+    return {descricao:r.querySelector('.d-desc').value.trim(),darf:r.querySelector('.d-darf').value.trim(),valor:parseNum(r.querySelector('.d-val').value)};
+  }).filter(function(d){return d.descricao||d.darf||d.valor;});
+}
+
+/* ---------- Abrir modal compensação ---------- */
+function openComp(id){
+  fillCreditosSelect();
+  // datalist com os números vivos (de onde dá pra puxar saldo)
+  var dl=$('#dlVivos');
+  dl.innerHTML=cadeiasVivas().map(function(c){
+    var n=c.dcomp_resultante||c.dcomp_inicial;
+    return '<option value="'+esc(n)+'" label="'+BRL(c.saldo_apos)+' — '+esc(c.descricao||'')+'"></option>';
+  }).join('')+creditosNaoUsados().filter(function(cr){return cr.perd_inicial;}).map(function(cr){
+    return '<option value="'+esc(cr.perd_inicial)+'" label="'+BRL(valorCreditoLivre(cr))+' — crédito '+fmtComp(cr.competencia)+'"></option>';
+  }).join('');
+  var c=id?state.compensacoes.filter(function(x){return x.id===id;})[0]:null;
+  editComp=c?c.id:null;
+  $('#compTitle').textContent=c?'Editar compensação':'Nova compensação';
+  $('#cData').value=c?c.data||'':'';
+  $('#cComp').value=c?c.competencia_debito||'':'';
+  $('#cDesc').value=c?c.descricao||'':'';
+  $('#cIni').value=c?c.dcomp_inicial||'':'';
+  $('#cRes').value=c?c.dcomp_resultante||'':'';
+  $('#cSaldo').value=c&&c.saldo_apos!=null?c.saldo_apos:'';
+  $('#cUser').value=c?c.usuario||'':'';
+  $('#cObs').value=c?c.obs||'':'';
+  $('#cCredito').value=c?c.credito_id||'':'';
+  var dep=c?c.departamento:'FISCAL';
+  $all('#cDepSeg button').forEach(function(b){b.classList.toggle('active',b.dataset.v===dep);});
+  var dl=$('#debList');dl.innerHTML='';
+  ((c&&c.debitos&&c.debitos.length)?c.debitos:[{}]).forEach(function(d){dl.appendChild(debRow(d));});
+  recalcDeb();$('#compWarn').innerHTML='';
+  pendingAnexos.comp=c&&c.anexos?c.anexos.slice():[];anexosRender('comp');$('#compFile').value='';
+  show('#ovComp');
+}
+function saveComp(){
+  var dep=$('#cDepSeg .active').dataset.v;
+  var debs=collectDebs();
+  if(!debs.length){toast('Adicione ao menos um débito',true);return;}
+  var vt=debs.reduce(function(s,d){return s+d.valor;},0);
+  var novoIni=$('#cIni').value.trim()||null;
+  var internos=[];
+  if(editComp){
+    var old=state.compensacoes.filter(function(x){return x.id===editComp;})[0];
+    if(old&&old.inis_internos) internos=old.inis_internos.slice();
+  }
+  if(novoIni&&internos.indexOf(novoIni)<0) internos.unshift(novoIni);
+  var obj={
+    id:editComp||uid('d'),data:$('#cData').value||null,competencia_debito:$('#cComp').value.trim(),
+    departamento:dep,descricao:$('#cDesc').value.trim(),debitos:debs,valor_total:vt,
+    dcomp_inicial:novoIni,dcomp_resultante:$('#cRes').value.trim()||null,inis_internos:internos,
+    saldo_apos:$('#cSaldo').value!==''?parseNum($('#cSaldo').value):null,
+    credito_id:$('#cCredito').value||null,usuario:$('#cUser').value.trim()||'—',
+    obs:$('#cObs').value.trim()||null,anexos:pendingAnexos.comp.slice(),criado_em:(editComp?undefined:new Date().toISOString().slice(0,10))
+  };
+  if(editComp){
+    for(var i=0;i<state.compensacoes.length;i++)if(state.compensacoes[i].id===editComp){obj.criado_em=state.compensacoes[i].criado_em;state.compensacoes[i]=obj;break;}
+  }else state.compensacoes.push(obj);
+  saveLocal();upsertCompRemote(obj);
+  hide('#ovComp');renderAll();toast('Compensação salva');
+}
+
+/* ---------- Abrir modal crédito ---------- */
+function openCred(id){
+  var c=id?state.creditos.filter(function(x){return x.id===id;})[0]:null;
+  editCred=c?c.id:null;
+  $('#credTitle').textContent=c?'Editar crédito':'Novo crédito';
+  $('#rComp').value=c?c.competencia||'':'';
+  $('#rValor').value=c?c.valor_original:'';
+  $('#rPerd').value=c?c.perd_inicial||'':'';
+  $('#rData').value=c?c.ultima_data||'':'';
+  $('#rSaldoManual').value=c&&c.saldo_manual!=null?c.saldo_manual:'';
+  $('#rObs').value=c?c.obs||'':'';
+  pendingAnexos.cred=c&&c.anexos?c.anexos.slice():[];anexosRender('cred');$('#credFile').value='';
+  show('#ovCred');
+}
+function saveCred(){
+  var obj={
+    id:editCred||uid('c'),competencia:$('#rComp').value.trim(),valor_original:parseNum($('#rValor').value),
+    perd_inicial:$('#rPerd').value.trim()||null,ultima_data:$('#rData').value||null,
+    saldo_manual:$('#rSaldoManual').value!==''?parseNum($('#rSaldoManual').value):null,obs:$('#rObs').value.trim()||null,
+    anexos:pendingAnexos.cred.slice()
+  };
+  if(!obj.competencia){toast('Informe a competência',true);return;}
+  if(editCred){for(var i=0;i<state.creditos.length;i++)if(state.creditos[i].id===editCred){state.creditos[i]=obj;break;}}
+  else state.creditos.push(obj);
+  saveLocal();upsertCredRemote(obj);
+  hide('#ovCred');renderAll();toast('Crédito salvo');
+}
+function delCred(id){
+  if(!confirm('Excluir este crédito?'))return;
+  state.creditos=state.creditos.filter(function(c){return c.id!==id;});
+  saveLocal();delCredRemote(id);renderAll();toast('Crédito excluído');
+}
+function delComp(id){
+  if(!confirm('Excluir esta compensação?'))return;
+  state.compensacoes=state.compensacoes.filter(function(c){return c.id!==id;});
+  saveLocal();delCompRemote(id);renderAll();toast('Compensação excluída');
+}
+
+/* ---------- Export ---------- */
+function download(name,txt,type){
+  var b=new Blob([txt],{type:type||'text/plain;charset=utf-8'});var u=URL.createObjectURL(b);
+  var a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);
+}
+function exportJson(){download('mx-perdcomp-'+(state.empresa||'').replace(/\s+/g,'-').toLowerCase()+'.json',JSON.stringify(state,null,2),'application/json');}
+function exportCsv(){
+  var rows=[['DATA','DEPARTAMENTO','DESCRICAO','COMPETENCIA','DARF','VALOR_DEBITO','VALOR_TOTAL_EVENTO','DCOMP_INICIAL','DCOMP_RESULTANTE','SALDO_APOS','RESPONSAVEL','OBS']];
+  state.compensacoes.slice().sort(function(a,b){return (a.data||'').localeCompare(b.data||'');}).forEach(function(c){
+    (c.debitos||[]).forEach(function(d,i){
+      rows.push([c.data||'',c.departamento,c.descricao||'',c.competencia_debito||'',d.darf||'',br(d.valor),i===0?br(compTotal(c)):'',i===0?(c.dcomp_inicial||''):'',i===0?(c.dcomp_resultante||''):'',i===0&&c.saldo_apos!=null?br(c.saldo_apos):'',i===0?(c.usuario||''):'',i===0?(c.obs||''):'']);
+    });
+  });
+  function br(n){return (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  var csv='﻿'+rows.map(function(r){return r.map(function(v){return '"'+(''+v).replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
+  download('mx-perdcomp-compensacoes.csv',csv,'text/csv;charset=utf-8');
+}
+
+/* ---------- Config ---------- */
+function setModeUI(){
+  $('#modeDot').className='dot'+(online?' on':'');
+  $('#modeTxt').textContent=online?'Compartilhado':'Local';
+  $('#empresaNome').textContent=cfg.empresa||state.empresa||'—';
+}
+function openCfg(){$('#sbUrl').value=cfg.url;$('#sbKey').value=cfg.key;$('#sbEmpresa').value=cfg.empresa||'DF CAMPOS';show('#ovCfg');}
+function saveCfgAndConnect(){
+  cfg.url=$('#sbUrl').value.trim();cfg.key=$('#sbKey').value.trim();cfg.empresa=$('#sbEmpresa').value.trim()||'DF CAMPOS';
+  if(!cfg.url||!cfg.key){toast('Preencha URL e chave',true);return;}
+  saveCfg();connectSupabase(function(ok){if(ok){hide('#ovCfg');renderAll();}});
+}
+function useLocalMode(){online=false;sb=null;cfg.url='';cfg.key='';saveCfg();loadLocal();setModeUI();renderAll();hide('#ovCfg');toast('Modo local ativo');}
+
+/* ---------- Init ---------- */
+function bind(){
+  $('#tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)go(b.dataset.tab);});
+  $('#btnTheme').onclick=function(){var r=document.documentElement;var t=r.getAttribute('data-theme')==='light'?'dark':'light';r.setAttribute('data-theme',t);localStorage.setItem('mxperdcomp_theme',t);};
+  $('#btnConfig').onclick=openCfg;
+  $('#btnNovaComp').onclick=function(){openComp(null);};
+  $('#btnNovaComp2').onclick=function(){openComp(null);};
+  $('#btnNovoCred').onclick=function(){openCred(null);};
+  $('#btnNovoCred2').onclick=function(){openCred(null);};
+  $('#btnAddDeb').onclick=function(){$('#debList').appendChild(debRow());};
+  $('#compFile').addEventListener('change',function(e){if(e.target.files.length)anexoAddFiles('comp',e.target.files);e.target.value='';});
+  $('#credFile').addEventListener('change',function(e){if(e.target.files.length)anexoAddFiles('cred',e.target.files);e.target.value='';});
+  $('#btnSaveComp').onclick=saveComp;
+  $('#btnSaveCred').onclick=saveCred;
+  $('#cDepSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$all('#cDepSeg button').forEach(function(x){x.classList.remove('active');});b.classList.add('active');});
+  $('#segDep').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;filtro.dep=b.dataset.dep;$all('#segDep button').forEach(function(x){x.classList.toggle('active',x===b);});renderCompensacoes();});
+  $('#fComp').addEventListener('input',renderCompensacoes);
+  $('#fCred').addEventListener('input',renderCreditos);
+  $('#btnSaveCfg').onclick=saveCfgAndConnect;
+  $('#btnLocalMode').onclick=useLocalMode;
+  $('#btnExportJson').onclick=exportJson;
+  $('#btnExportCsv').onclick=exportCsv;
+  $('#btnPrint').onclick=function(){window.print();};
+  $('#btnReseed').onclick=function(){if(confirm('Recarregar os dados originais da DF CAMPOS? Isto substitui os dados locais atuais.')){seedState();saveLocal();renderAll();toast('Dados DF CAMPOS recarregados');hide('#ovCfg');}};
+  $('#fileImport').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var d=JSON.parse(rd.result);state=d;saveLocal();renderAll();toast('Importado');hide('#ovCfg');}catch(err){toast('JSON inválido',true);}};rd.readAsText(f);});
+  $all('[data-close]').forEach(function(b){b.onclick=function(){b.closest('.overlay').classList.remove('show');};});
+  $all('.overlay').forEach(function(o){o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('show');});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')$all('.overlay.show').forEach(function(o){o.classList.remove('show');});});
+}
+
+function init(){
+  var th=localStorage.getItem('mxperdcomp_theme');if(th)document.documentElement.setAttribute('data-theme',th);
+  loadCfg();bind();
+  if(cfg.url&&cfg.key){ // tenta online
+    connectSupabase(function(ok){ if(!ok){loadLocal();} setModeUI();renderAll();maybeTest(); });
+  }else{
+    loadLocal();setModeUI();renderAll();maybeTest();
+  }
+}
+
+/* ---------- AUTOTESTE ?teste=1 ---------- */
+function maybeTest(){
+  if(location.search.indexOf('teste=1')<0)return;
+  var pass=0,fail=0,logs=[];
+  function ok(name,cond){if(cond){pass++;}else{fail++;logs.push('✗ '+name);}}
+  // reseed limpo para números determinísticos
+  seedState();
+  ok('19 créditos importados',state.creditos.length===19);
+  ok('25 compensações importadas',state.compensacoes.length===25);
+  ok('evidências carregadas',(state.evidencias||[]).length>=30);
+  ok('total gerado = 619294.41',Math.abs(totalGerado()-619294.41)<0.5);
+  ok('débitos lançados = 714955.46',Math.abs(totalUsado()-714955.46)<1);
+  ok('fiscal + folha = total débitos',Math.abs(usadoDep('FISCAL')+usadoDep('FOLHA')-totalUsado())<0.5);
+  // ===== motor de cadeias =====
+  var vivas=cadeiasVivas();
+  ok('3 cadeias vivas',vivas.length===3);
+  var somaVivas=vivas.reduce(function(s,c){return s+Number(c.saldo_apos);},0);
+  ok('soma cadeias vivas = 13346.26',Math.abs(somaVivas-13346.26)<0.05);
+  var livres=creditosNaoUsados();
+  ok('1 crédito não utilizado (jun/26)',livres.length===1&&livres[0].competencia==='2026-06');
+  ok('disponível = 26841.22',Math.abs(saldoDisponivel()-26841.22)<0.05);
+  var pn=proximoNumero();
+  ok('próximo nº = cadeia de maior saldo (dez/2023)',!!pn&&pn.num==='13159.52477.171224.1.7.15-3225');
+  // consumo de um nº vivo mata a cadeia e cria outra
+  var alvo='24017.71489.220626.1.3.15-6391'; // cadeia viva de 2620.32
+  var antes=saldoDisponivel();
+  state.compensacoes.push({id:'tst1',data:'2026-07-01',departamento:'FISCAL',debitos:[{valor:1500}],valor_total:1500,
+    dcomp_inicial:alvo,dcomp_resultante:'99999.11111.010726.1.3.15-0001',inis_internos:[alvo],saldo_apos:1120.32});
+  ok('consumir nº vivo substitui saldo da cadeia',Math.abs(saldoDisponivel()-(antes-2620.32+1120.32))<0.05);
+  // mesmo nº inicial usado depois supera o anterior
+  state.compensacoes.push({id:'tst2',data:'2026-07-02',departamento:'FISCAL',debitos:[{valor:100}],valor_total:100,
+    dcomp_inicial:alvo,dcomp_resultante:'99999.22222.020726.1.3.15-0002',inis_internos:[alvo],saldo_apos:1020.32});
+  ok('mesmo inicial depois supera o elo anterior',Math.abs(saldoDisponivel()-(antes-2620.32+1020.32))<0.05);
+  state.compensacoes.pop();state.compensacoes.pop();
+  // evidência do e-CAC mata cadeia (caso 13º INSS: saldo 28480.14 não pode contar)
+  var t13=state.compensacoes.filter(function(c){return Math.abs(Number(c.saldo_apos)-28480.14)<0.01;})[0];
+  ok('cadeia do 13º (28480.14) morta por evidência e-CAC',!!t13&&vivas.indexOf(t13)<0);
+  // crédito com PER usado não conta como livre
+  var c18=state.creditos.filter(function(c){return c.competencia==='2026-05';})[0];
+  ok('crédito mai/26 (PER 42779...) está em cadeia, não livre',!!c18&&livres.indexOf(c18)<0);
+  ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
+  ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
+  ok('fmtComp 2026-05',fmtComp('2026-05')==='mai/2026');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;top:10px;right:10px;z-index:9999;background:'+(fail?'#331717':'#123021')+';color:#fff;border:1px solid '+(fail?'#e05a5a':'#27ae60')+';padding:12px 16px;border-radius:10px;font:13px system-ui;box-shadow:0 8px 30px rgba(0,0,0,.4)';
+  box.innerHTML='<b>Autoteste MX PERDCOMP</b><br>'+pass+' passaram · '+fail+' falharam'+(fail?'<br><small>'+logs.join('<br>')+'</small>':' ✓');
+  document.body.appendChild(box);
+  loadLocal(); // restaura estado real
+  renderAll();
+}
+
+window.go=go;window.openComp=openComp;window.openCred=openCred;window.delCred=delCred;window.delComp=delComp;window.openDet=openDet;
+window.anexoOpen=anexoOpen;window.anexoRemove=anexoRemove;
+init();
+</script>
+</body>
+</html>
