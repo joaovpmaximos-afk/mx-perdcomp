@@ -198,7 +198,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
         <div class="glow"></div>
         <div class="lbl">Saldo disponível para PERDCOMP</div>
         <div class="big mono" id="heroSaldo">R$ 0,00</div>
-        <div class="note" id="heroNote">Soma dos saldos vivos de cada cadeia de DCOMP (último saldo registrado, já com SELIC quando informada) + créditos ainda não utilizados.</div>
+        <div class="note" id="heroNote">Saldo da <b>ponta da corrente</b> — a última transmissão de PER/DCOMP (o valor que o e-CAC mostra em aberto). Os saldos anteriores já foram carregados adiante e não se somam.</div>
       </div>
       <div class="card">
         <h3>Próximo nº a utilizar</h3>
@@ -227,11 +227,11 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
     <div id="alertas"></div>
 
     <div class="card" style="margin-bottom:14px">
-      <h3>De onde sai o saldo (cadeias vivas)</h3>
-      <div class="sub" style="margin-bottom:10px">Cada linha é um número de PER/DCOMP em aberto com saldo, ou um crédito que ainda não entrou em nenhuma compensação. É daqui que a folha e o fiscal devem puxar.</div>
+      <h3>Extrato da corrente — como o saldo chegou até aqui</h3>
+      <div class="sub" style="margin-bottom:10px">Cada transmissão consome o saldo da anterior e deixa um novo saldo. Os saldos <b>consumidos</b> já rolaram adiante; vale só a <b>ponta (DISPONÍVEL)</b> — é dela que folha e fiscal devem puxar.</div>
       <div class="tablewrap">
         <table id="tblVivas"><thead><tr>
-          <th>Origem</th><th>Nº a utilizar</th><th class="num">Saldo</th><th>Última mov.</th><th></th>
+          <th>Data</th><th>Descrição</th><th>Nº resultante</th><th class="num">Saldo após</th><th>Situação</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
@@ -455,31 +455,49 @@ function saldoCredito(cr){
   if(cr.saldo_manual!=null && cr.saldo_manual!=='') return Number(cr.saldo_manual);
   return (Number(cr.valor_original)||0)-usadoDoCredito(cr.id);
 }
-/* ---------- Cadeias: o crédito é consumido em corrente (inicial → resultante).
-   O saldo real disponível é o "saldo após" do ÚLTIMO elo de cada corrente ainda
-   em aberto, mais os créditos que nunca entraram em compensação. Isso reflete a
-   SELIC (o saldo registrado já vem atualizado) e a quitação parcial de débitos,
-   que o modelo "gerado - usado" não captura. ---------- */
-function ordKey(c,i){return (c.data||'9999-12-31')+'|'+('000000'+i).slice(-6);}
-function cadeiasVivas(){
-  var cs=state.compensacoes, evid=state.evidencias||[];
-  var out=[];
-  for(var i=0;i<cs.length;i++){
-    var c=cs[i]; var s=Number(c.saldo_apos);
-    if(c.saldo_apos==null||c.saldo_apos===''||isNaN(s)||s<=0.005) continue;
-    var res=c.dcomp_resultante||null, ini=c.dcomp_inicial||null;
-    var sup=false;
-    for(var j=0;j<cs.length&&!sup;j++){
-      if(i===j) continue;
-      var d=cs[j];
-      if(res && (d.dcomp_inicial===res || (d.inis_internos||[]).indexOf(res)>=0)) sup=true;           // alguém consumiu o nº resultante
-      else if(ini && d.dcomp_inicial===ini && ordKey(d,j)>ordKey(c,i)) sup=true;                       // mesmo nº inicial usado depois
+/* ---------- Motor da corrente (v3) ----------
+   O crédito corre numa ÚNICA cadeia de PER/DCOMP: cada transmissão consome o nº
+   anterior e gera um nº resultante com um novo "saldo após" (o que o e-CAC mostra).
+   Os saldos intermediários já foram carregados adiante — NÃO se somam.
+   DISPONÍVEL = saldo da PONTA = a última transmissão da corrente (a célula amarela).
+   Saldos antigos que ficaram soltos (não são a ponta e ninguém consumiu) são
+   sinalizados na Conferência para o usuário confirmar no e-CAC, mas não entram
+   no disponível — é o que evita o desencontro. ---------- */
+function ordIdx(){var m={};state.compensacoes.forEach(function(c,i){m[c.id]=i;});return m;}
+// data vazia ordena como MAIS ANTIGA (não pode virar a ponta da corrente)
+function compsOrdenadas(){var m=ordIdx();return state.compensacoes.slice().sort(function(a,b){
+  return (a.data||'0000-01-01').localeCompare(b.data||'0000-01-01')||(m[a.id]-m[b.id]);});}
+function temSaldo(c){var s=c.saldo_apos;return s!=null&&s!==''&&!isNaN(Number(s));}
+function pontaAtual(){var o=compsOrdenadas();for(var i=o.length-1;i>=0;i--){if(temSaldo(o[i]))return o[i];}return null;}
+function saldoDisponivel(){var p=pontaAtual();return p?Number(p.saldo_apos):0;}
+function proximoNumero(){var p=pontaAtual();if(!p)return null;return {num:p.dcomp_resultante||p.dcomp_inicial,saldo:Number(p.saldo_apos),de:p};}
+function numerosConsumidos(){
+  var s={};
+  state.compensacoes.forEach(function(c){
+    if(c.dcomp_inicial)s[c.dcomp_inicial]=1;
+    (c.inis_internos||[]).forEach(function(n){s[n]=1;});
+  });
+  (state.evidencias||[]).forEach(function(n){s[n]=1;});
+  return s;
+}
+// saldos que aparecem em aberto mas NÃO são a ponta (a conferir; não somados)
+function saldosEmAberto(){
+  var ponta=pontaAtual(), cons=numerosConsumidos();
+  return state.compensacoes.filter(function(c){
+    if(ponta&&c.id===ponta.id) return false;
+    var s=Number(c.saldo_apos);
+    if(!(s>10)) return false;                       // ignora migalhas (centavos residuais)
+    if(c.dcomp_resultante){
+      if(cons[c.dcomp_resultante]) return false;    // resultante já consumido pelo elo seguinte / e-CAC
+    }else if(c.dcomp_inicial){
+      // sem resultante: o saldo rolou adiante se OUTRA transmissão reusou o mesmo nº inicial
+      var carregou=state.compensacoes.some(function(d){
+        return d.id!==c.id && (d.dcomp_inicial===c.dcomp_inicial || (d.inis_internos||[]).indexOf(c.dcomp_inicial)>=0);
+      });
+      if(carregou) return false;
     }
-    if(!sup && res && evid.indexOf(res)>=0) sup=true;                                                  // consumido conforme registro do e-CAC
-    if(!sup) out.push(c);
-  }
-  out.sort(function(a,b){return Number(b.saldo_apos)-Number(a.saldo_apos);});
-  return out;
+    return true;
+  }).sort(function(a,b){return Number(b.saldo_apos)-Number(a.saldo_apos);});
 }
 function numerosUsados(){
   var s={};
@@ -500,17 +518,6 @@ function creditosNaoUsados(){
   });
 }
 function valorCreditoLivre(cr){return (cr.saldo_manual!=null&&cr.saldo_manual!=='')?Number(cr.saldo_manual):(Number(cr.valor_original)||0);}
-function saldoDisponivel(){
-  var t=0;
-  cadeiasVivas().forEach(function(c){t+=Number(c.saldo_apos);});
-  creditosNaoUsados().forEach(function(cr){t+=valorCreditoLivre(cr);});
-  return t;
-}
-function proximoNumero(){
-  var v=cadeiasVivas();
-  if(!v.length) return null;
-  return {num:v[0].dcomp_resultante||v[0].dcomp_inicial, saldo:Number(v[0].saldo_apos), de:v[0], total:v.length};
-}
 function mesesParado(dataStr){
   if(!dataStr) return null;
   var p=dataStr.split('-'); if(p.length<2) return null;
@@ -594,7 +601,7 @@ function go(tab){
 /* ---------- Render Painel ---------- */
 function renderPainel(){
   var ger=totalGerado(), usa=totalUsado(), disp=saldoDisponivel();
-  var vivas=cadeiasVivas(), livres=creditosNaoUsados();
+  var ponta=pontaAtual(), abertos=saldosEmAberto(), livres=creditosNaoUsados();
   $('#heroSaldo').textContent=BRL(disp);
   $('#kGerado').textContent=BRLk(ger);
   $('#kUsado').textContent=BRLk(usa);
@@ -614,41 +621,39 @@ function renderPainel(){
     '<span><span class="sw" style="background:var(--folha)"></span>Folha <b>'+BRL(fol)+'</b></span>'+
     '<span><span class="sw" style="background:var(--ok)"></span>Disponível hoje <b>'+BRL(disp)+'</b></span>';
 
-  // proximo numero = cadeia viva com maior saldo
+  // proximo numero = ponta da corrente (a célula amarela)
   var pn=proximoNumero();
   $('#proxNumero').textContent=pn?pn.num:'—';
-  $('#proxInfo').textContent=pn?('Saldo '+BRL(pn.saldo)+' · '+esc(pn.de.descricao||'')+(pn.total>1?' · +'+(pn.total-1)+' outra(s) cadeia(s) viva(s)':'')) :
-    (livres.length?'Nenhuma cadeia aberta — use o PER do próximo crédito.':'Nenhum número em aberto.');
+  $('#proxInfo').textContent=pn?('Saldo '+BRL(pn.saldo)+' · '+esc(pn.de.descricao||'')+' · '+fmtData(pn.de.data)) :
+    (livres.length?'Nenhuma corrente aberta — declare o PER do próximo crédito.':'Nenhum número em aberto.');
 
-  // tabela "de onde sai o saldo"
-  var rows='';
-  vivas.forEach(function(c){
+  // EXTRATO: as últimas transmissões da corrente, até chegar na ponta (disponível)
+  var ord=compsOrdenadas().filter(temSaldo);
+  var ult=ord.slice(-8);
+  var rows=ult.map(function(c){
+    var ehPonta=ponta&&c.id===ponta.id;
     var num=c.dcomp_resultante||c.dcomp_inicial;
-    var mp=mesesParado(c.data);
-    var alertTag=(mp!=null&&mp>=6)?' <span class="tag warn">parado '+mp+'m</span>':'';
-    rows+='<tr><td>'+esc(c.descricao||'')+' <span class="sub">('+fmtComp(c.competencia_debito)+')</span></td>'+
+    var st=ehPonta?'<span class="tag ok">DISPONÍVEL</span>':'<span class="tag zero">consumido</span>';
+    return '<tr'+(ehPonta?' style="background:var(--okbg)"':'')+'>'+
+      '<td>'+fmtData(c.data)+'</td>'+
+      '<td>'+esc(c.descricao||'')+' <span class="sub">('+fmtComp(c.competencia_debito)+')</span></td>'+
       '<td class="num-code">'+esc(num||'—')+'</td>'+
-      '<td class="num mono"><b>'+BRL(c.saldo_apos)+'</b></td>'+
-      '<td>'+fmtData(c.data)+alertTag+'</td>'+
-      '<td><button class="mini" onclick="openDet(\''+c.id+'\')">ver</button></td></tr>';
+      '<td class="num mono"'+(ehPonta?' style="color:var(--ok);font-weight:800"':'')+'>'+BRL(c.saldo_apos)+'</td>'+
+      '<td>'+st+'</td></tr>';
+  }).join('');
+  $('#tblVivas tbody').innerHTML=rows||'<tr><td colspan="5" class="empty">Nenhuma transmissão com saldo.</td></tr>';
+
+  // CONFERÊNCIA / alertas
+  var al=[];
+  abertos.forEach(function(c){
+    var mp=mesesParado(c.data);
+    al.push({t:'warn',h:'⚠️ Saldo de <b>'+BRL(c.saldo_apos)+'</b> em <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'sem nº')+', '+fmtData(c.data)+(mp!=null&&mp>=6?', parado '+mp+'m':'')+') aparece em aberto mas <b>não é a ponta atual</b> da corrente. Confirme no e-CAC: se já foi usado, edite a compensação e zere o "saldo após"; se é um crédito separado ainda válido, ele soma ao disponível.'});
   });
   livres.forEach(function(cr){
-    rows+='<tr><td>Crédito '+fmtComp(cr.competencia)+' <span class="tag ok">não utilizado</span></td>'+
-      '<td class="num-code">'+esc(cr.perd_inicial||'aguardando 1º PER')+'</td>'+
-      '<td class="num mono"><b>'+BRL(valorCreditoLivre(cr))+'</b></td>'+
-      '<td>—</td><td><button class="mini" onclick="openCred(\''+cr.id+'\')">ver</button></td></tr>';
+    al.push({t:'info',h:'ℹ️ Crédito de <b>'+fmtComp(cr.competencia)+'</b> (<b>'+BRL(valorCreditoLivre(cr))+'</b>) apurado e <b>ainda não declarado</b> em PER/DCOMP — não entra no disponível até ser usado numa compensação.'});
   });
-  $('#tblVivas tbody').innerHTML=rows||'<tr><td colspan="5" class="empty">Nenhuma cadeia viva — saldo zerado.</td></tr>';
-
-  // alertas
-  var al=[];
-  vivas.forEach(function(c){
-    var mp=mesesParado(c.data);
-    if(mp!=null&&mp>=6) al.push({t:'warn',h:'⚠️ Cadeia <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'')+') com saldo de <b>'+BRL(c.saldo_apos)+'</b> está parada há '+mp+' meses ('+fmtData(c.data)+'). Confirme no e-CAC se esse saldo ainda vale; se não, edite a compensação e zere o "saldo após".'});
-  });
-  var semNum=state.compensacoes.filter(function(c){return !c.dcomp_inicial&&!c.dcomp_resultante;}).length;
-  if(semNum) al.push({t:'info',h:'ℹ️ '+semNum+' compensação(ões) sem nº de DCOMP informado.'});
-  if(!al.length) al.push({t:'ok',h:'✓ '+vivas.length+' cadeia(s) viva(s) e '+livres.length+' crédito(s) sem uso. Disponível: <b>'+BRL(disp)+'</b>.'});
+  if(!al.length) al.push({t:'ok',h:'✓ Corrente conferida. Disponível hoje: <b>'+BRL(disp)+'</b>'+(pn?' na ponta '+esc(pn.num):'')+'.'});
+  else al.unshift({t:'ok',h:'✓ <b>Disponível hoje: '+BRL(disp)+'</b> (saldo da ponta da corrente). Abaixo, itens a conferir que <b>não</b> estão somados nesse valor.'});
   $('#alertas').innerHTML=al.map(function(a){return '<div class="callout '+a.t+'" style="margin-bottom:14px">'+a.h+'</div>';}).join('');
 
   // ultimas
@@ -849,14 +854,13 @@ function collectDebs(){
 /* ---------- Abrir modal compensação ---------- */
 function openComp(id){
   fillCreditosSelect();
-  // datalist com os números vivos (de onde dá pra puxar saldo)
-  var dl=$('#dlVivos');
-  dl.innerHTML=cadeiasVivas().map(function(c){
-    var n=c.dcomp_resultante||c.dcomp_inicial;
-    return '<option value="'+esc(n)+'" label="'+BRL(c.saldo_apos)+' — '+esc(c.descricao||'')+'"></option>';
-  }).join('')+creditosNaoUsados().filter(function(cr){return cr.perd_inicial;}).map(function(cr){
-    return '<option value="'+esc(cr.perd_inicial)+'" label="'+BRL(valorCreditoLivre(cr))+' — crédito '+fmtComp(cr.competencia)+'"></option>';
-  }).join('');
+  // datalist: a ponta atual (1º), depois saldos a conferir e créditos a declarar
+  var dl=$('#dlVivos');var opts='';
+  var ponta=pontaAtual();
+  if(ponta){var np=ponta.dcomp_resultante||ponta.dcomp_inicial;opts+='<option value="'+esc(np)+'" label="PONTA · '+BRL(ponta.saldo_apos)+' — '+esc(ponta.descricao||'')+'"></option>';}
+  saldosEmAberto().forEach(function(c){var n=c.dcomp_resultante||c.dcomp_inicial;if(n)opts+='<option value="'+esc(n)+'" label="a conferir · '+BRL(c.saldo_apos)+' — '+esc(c.descricao||'')+'"></option>';});
+  creditosNaoUsados().forEach(function(cr){if(cr.perd_inicial)opts+='<option value="'+esc(cr.perd_inicial)+'" label="crédito '+fmtComp(cr.competencia)+' · '+BRL(valorCreditoLivre(cr))+'"></option>';});
+  dl.innerHTML=opts;
   var c=id?state.compensacoes.filter(function(x){return x.id===id;})[0]:null;
   editComp=c?c.id:null;
   $('#compTitle').textContent=c?'Editar compensação':'Nova compensação';
@@ -1027,33 +1031,30 @@ function maybeTest(){
   ok('total gerado = 619294.41',Math.abs(totalGerado()-619294.41)<0.5);
   ok('débitos lançados = 714955.46',Math.abs(totalUsado()-714955.46)<1);
   ok('fiscal + folha = total débitos',Math.abs(usadoDep('FISCAL')+usadoDep('FOLHA')-totalUsado())<0.5);
-  // ===== motor de cadeias =====
-  var vivas=cadeiasVivas();
-  ok('3 cadeias vivas',vivas.length===3);
-  var somaVivas=vivas.reduce(function(s,c){return s+Number(c.saldo_apos);},0);
-  ok('soma cadeias vivas = 13346.26',Math.abs(somaVivas-13346.26)<0.05);
-  var livres=creditosNaoUsados();
-  ok('1 crédito não utilizado (jun/26)',livres.length===1&&livres[0].competencia==='2026-06');
-  ok('disponível = 26841.22',Math.abs(saldoDisponivel()-26841.22)<0.05);
+  // ===== motor da corrente (v3): disponível = saldo da ponta =====
+  var ponta=pontaAtual();
+  ok('ponta = IR e CSLL 3ª quota (22/06)',!!ponta&&Math.abs(Number(ponta.saldo_apos)-2620.32)<0.01);
+  ok('DISPONÍVEL = 2.620,32 (célula amarela)',Math.abs(saldoDisponivel()-2620.32)<0.01);
   var pn=proximoNumero();
-  ok('próximo nº = cadeia de maior saldo (dez/2023)',!!pn&&pn.num==='13159.52477.171224.1.7.15-3225');
-  // consumo de um nº vivo mata a cadeia e cria outra
-  var alvo='24017.71489.220626.1.3.15-6391'; // cadeia viva de 2620.32
+  ok('próximo nº = 24017.71489...6391',!!pn&&pn.num==='24017.71489.220626.1.3.15-6391');
+  // saldos intermediários NÃO entram no disponível
+  ok('107.788,24 (elo anterior) não é a ponta',saldoDisponivel()<107788);
+  // nova transmissão vira a nova ponta e substitui o disponível
   var antes=saldoDisponivel();
   state.compensacoes.push({id:'tst1',data:'2026-07-01',departamento:'FISCAL',debitos:[{valor:1500}],valor_total:1500,
-    dcomp_inicial:alvo,dcomp_resultante:'99999.11111.010726.1.3.15-0001',inis_internos:[alvo],saldo_apos:1120.32});
-  ok('consumir nº vivo substitui saldo da cadeia',Math.abs(saldoDisponivel()-(antes-2620.32+1120.32))<0.05);
-  // mesmo nº inicial usado depois supera o anterior
-  state.compensacoes.push({id:'tst2',data:'2026-07-02',departamento:'FISCAL',debitos:[{valor:100}],valor_total:100,
-    dcomp_inicial:alvo,dcomp_resultante:'99999.22222.020726.1.3.15-0002',inis_internos:[alvo],saldo_apos:1020.32});
-  ok('mesmo inicial depois supera o elo anterior',Math.abs(saldoDisponivel()-(antes-2620.32+1020.32))<0.05);
-  state.compensacoes.pop();state.compensacoes.pop();
-  // evidência do e-CAC mata cadeia (caso 13º INSS: saldo 28480.14 não pode contar)
-  var t13=state.compensacoes.filter(function(c){return Math.abs(Number(c.saldo_apos)-28480.14)<0.01;})[0];
-  ok('cadeia do 13º (28480.14) morta por evidência e-CAC',!!t13&&vivas.indexOf(t13)<0);
-  // crédito com PER usado não conta como livre
-  var c18=state.creditos.filter(function(c){return c.competencia==='2026-05';})[0];
-  ok('crédito mai/26 (PER 42779...) está em cadeia, não livre',!!c18&&livres.indexOf(c18)<0);
+    dcomp_inicial:'24017.71489.220626.1.3.15-6391',dcomp_resultante:'99999.11111.010726.1.3.15-0001',inis_internos:['24017.71489.220626.1.3.15-6391'],saldo_apos:1120.32});
+  ok('nova transmissão vira a ponta (disp=1120.32)',Math.abs(saldoDisponivel()-1120.32)<0.01);
+  ok('antiga ponta (2620.32) sai do disponível',Math.abs(antes-2620.32)<0.01);
+  state.compensacoes.pop();
+  // saldos em aberto antigos NÃO somam ao disponível (10.723,46 dez/2023)
+  var abertos=saldosEmAberto();
+  ok('há saldo(s) em aberto a conferir',abertos.length>=1);
+  var somaAbertos=abertos.reduce(function(s,c){return s+Number(c.saldo_apos);},0);
+  ok('saldos em aberto NÃO estão no disponível',saldoDisponivel()===2620.32 && somaAbertos>0);
+  // 28.480,14 (13º) foi consumido por evidência e-CAC -> não aparece em aberto
+  ok('28.480,14 consumido por evidência, fora dos abertos',abertos.filter(function(c){return Math.abs(Number(c.saldo_apos)-28480.14)<0.01;}).length===0);
+  var livres=creditosNaoUsados();
+  ok('crédito jun/26 fica como "a declarar" (fora do disponível)',livres.filter(function(c){return c.competencia==='2026-06';}).length===1);
   ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
   ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
   ok('fmtComp 2026-05',fmtComp('2026-05')==='mai/2026');

@@ -44,31 +44,36 @@ PER/DCOMP). Um badge **📎** aparece na tabela; clique no anexo para abrir.
 - **Quanto tem?** número grande do Painel.
 - **Qual número declarar agora?** card *Próximo nº a utilizar*.
 
-## Como o saldo é calculado (motor de cadeias — v2)
-"Crédito gerado − débitos lançados" **não funciona** neste controle: o crédito rende
-SELIC e alguns débitos são quitados só em parte, então a subtração global estoura
-(os débitos somam mais que o crédito original). O valor confiável é o **"saldo após"
-do último elo de cada corrente de DCOMP** — exatamente como o e-CAC mostra.
+## Como o saldo é calculado (motor da corrente — v3)
+"Crédito gerado − débitos lançados" **não funciona** aqui: o crédito rende SELIC e
+alguns débitos são quitados só em parte, então a subtração global estoura. Também
+**não se somam** os saldos intermediários da corrente — cada transmissão de PER/DCOMP
+consome o saldo da anterior e deixa um novo saldo, então o valor de verdade é **só o
+saldo da ponta** (a última transmissão), exatamente a célula que fica destacada na
+planilha e o que o e-CAC mostra em aberto.
 
-O app reconstrói as correntes (nº inicial → nº resultante) e soma:
-1. o saldo dos elos **vivos** (nº resultante que ninguém consumiu ainda); mais
-2. os **créditos não utilizados** (PER que nunca entrou em compensação).
+Regra do app:
+- **Disponível = "saldo após" da última transmissão da corrente** (a ponta).
+- Saldos anteriores = **consumido** (já rolaram adiante).
+- Saldo antigo que ficou solto (não é a ponta e ninguém consumiu o nº) → **Conferência**:
+  fica sinalizado para confirmar no e-CAC, mas **não** entra no disponível.
+- Crédito apurado ainda sem PER declarado → listado como **a declarar**, fora do disponível.
 
-A tabela **"De onde sai o saldo"** no painel mostra cada parcela. Cadeias paradas
-há 6+ meses ganham alerta ("confirme no e-CAC").
+O painel mostra o **Extrato da corrente** (com a ponta em verde = DISPONÍVEL) e a
+seção de **Conferência**.
 
-## Números conferidos (carga v2 — planilha até 22/06/2026)
-- Crédito gerado: **R$ 619.294,41** (19 competências, inclui jun/26 R$ 13.494,96)
+## Números conferidos (carga v3 — planilha até 22/06/2026)
+- Crédito gerado: **R$ 619.294,41** (19 competências)
 - Débitos lançados: **R$ 714.955,46** (25 eventos — inclui SELIC/quitações parciais)
-- **Saldo disponível: R$ 26.841,22**, composto por:
-  - R$ 13.494,96 — crédito jun/2026 (aguardando 1º PER)
-  - R$ 10.723,46 — cadeia COFINS dez/2023 (`13159.52477...3225`) — **parada há 31 meses, confirmar no e-CAC**
-  - R$ 2.620,32 — cadeia IR/CSLL (`24017.71489.220626...6391`, 22/06/2026)
-  - R$ 2,48 — cadeia IRPJ (`05837.87606.180526...7448`, 18/05/2026)
+- **Saldo disponível hoje: R$ 2.620,32** — ponta da corrente, nº `24017.71489.220626.1.3.15-6391`
+  (IR e CSLL 3ª quota, 22/06/2026). Bate com a célula amarela da planilha.
+- **A conferir (não somado):** COFINS dez/2023 `13159.52477...3225` R$ 10.723,46 — parado
+  há 31 meses; verificar no e-CAC se já foi usado.
+- **A declarar (não somado):** crédito jun/2026 R$ 13.494,96 (ainda sem PER).
 
-> A atualização SELIC segue manual: informe o *saldo após* de cada compensação
-> (o valor que o e-CAC mostrar) — ele vira o valor vivo da cadeia.
+> SELIC segue manual: ao lançar uma compensação, informe o *saldo após* que o e-CAC
+> mostrou — ele vira o novo saldo da ponta.
 
 ## Teste
-Abra `index.html?teste=1` — roda o autoteste dos cálculos (18 verificações,
-incluindo o motor de cadeias: consumo de nº vivo, supersessão e evidências e-CAC).
+Abra `index.html?teste=1` — autoteste dos cálculos (19 verificações, incluindo o motor
+da corrente: ponta, supersessão, saldos em aberto e evidências e-CAC).
