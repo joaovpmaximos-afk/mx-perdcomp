@@ -3,21 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
 <title>MX PERDCOMP — Controle de Créditos e Compensações</title>
 <style>
 :root{
-  --bg:#0f1720; --bg2:#16212e; --card:#1b2836; --card2:#213142; --line:#2c3e52;
-  --txt:#e8eef5; --mut:#93a7bd; --mut2:#6d829a;
-  --brand:#2f80ed; --brand2:#1f6fe0; --ok:#27ae60; --okbg:#123021;
-  --warn:#e2a63b; --warnbg:#33280f; --dang:#e05a5a; --dangbg:#331717;
+  --bg:#0a1017; --bg2:#0d1520; --card:#111a25; --card2:#172230; --line:#22303f;
+  --txt:#e9eff6; --mut:#8fa3b8; --mut2:#647a90;
+  --brand:#049f77; --brand2:#06c290; --brandbg:#0b2a21;
+  --ok:#10c98d; --okbg:#0b2a21;
+  --warn:#e2a63b; --warnbg:#2d2310; --dang:#e05a5a; --dangbg:#331717;
   --fiscal:#3aa0ff; --fiscalbg:#12283d; --folha:#b07cff; --folhabg:#241a3a;
-  --shadow:0 8px 30px rgba(0,0,0,.35);
+  --shadow:0 10px 32px rgba(2,8,16,.45);
 }
 :root[data-theme="light"]{
-  --bg:#eef2f7; --bg2:#e4ebf3; --card:#ffffff; --card2:#f5f8fc; --line:#dbe4ee;
-  --txt:#16222f; --mut:#5a6b7d; --mut2:#8496a8;
-  --brand:#2f80ed; --brand2:#1f6fe0; --ok:#1f9d55; --okbg:#e4f5ec;
-  --warn:#c98a1a; --warnbg:#fbf1da; --dang:#d84848; --dangbg:#fbe7e7;
+  --bg:#f1f5f8; --bg2:#e8eef4; --card:#ffffff; --card2:#f3f7fa; --line:#dce5ee;
+  --txt:#13202e; --mut:#5a6b7d; --mut2:#8496a8;
+  --brand:#04916d; --brand2:#037a5b; --brandbg:#e1f4ec;
+  --ok:#0a9e6f; --okbg:#e1f4ec;
+  --warn:#b97e14; --warnbg:#fbf1da; --dang:#d84848; --dangbg:#fbe7e7;
   --fiscal:#1a73e8; --fiscalbg:#e3eefd; --folha:#7d4fd6; --folhabg:#efe6fd;
   --shadow:0 6px 24px rgba(30,50,80,.10);
 }
@@ -31,9 +34,14 @@ button{font-family:inherit}
 /* Layout */
 header.top{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
 .top-in{max-width:1180px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
-.logo .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),#7c5cff);display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:var(--shadow)}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.3px}
+.logo img{width:38px;height:38px;border-radius:10px;box-shadow:var(--shadow);display:block}
 .logo small{display:block;font-weight:600;color:var(--mut);font-size:11px;letter-spacing:.4px}
+.ic{flex:none;vertical-align:-3px}
+button .ic{margin-right:2px}
+:focus-visible{outline:2px solid var(--brand2);outline-offset:2px;border-radius:6px}
+.btn:active,.iconbtn:active,.mini:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .grow{flex:1}
 .pill{font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mut);display:inline-flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--mut2)}
@@ -42,7 +50,10 @@ header.top{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,va
 .iconbtn:hover{border-color:var(--brand);color:var(--brand)}
 
 nav.tabs{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:4px;flex-wrap:wrap}
-nav.tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s}
+nav.tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.callout .ic{flex:none;margin-top:2px}
+.empty .em svg{opacity:.45}
+.clip .ic{vertical-align:-2px;margin-right:2px}
 nav.tabs button:hover{color:var(--txt)}
 nav.tabs button.active{color:var(--brand);border-color:var(--brand)}
 nav.tabs .badge{font-size:10.5px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:6px;color:var(--mut)}
@@ -67,13 +78,25 @@ main{max-width:1180px;margin:0 auto;padding:20px 18px 80px}
 .stat.sm{font-size:20px}
 .sub{color:var(--mut);font-size:12px;margin-top:3px}
 
-.hero{background:linear-gradient(135deg,#183050,#1a2740);border:1px solid #274763;color:#eaf2ff;position:relative;overflow:hidden}
-:root[data-theme="light"] .hero{background:linear-gradient(135deg,#2f80ed,#5b8def);border-color:#2f80ed;color:#fff}
-.hero .lbl{font-size:12px;opacity:.85;text-transform:uppercase;letter-spacing:1px;font-weight:600}
-.hero .big{font-size:44px;font-weight:800;letter-spacing:-1.5px;margin:6px 0 2px;line-height:1}
-@media(max-width:520px){.hero .big{font-size:34px}}
-.hero .note{font-size:12px;opacity:.8;margin-top:8px;max-width:90%}
-.hero .glow{position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.5),transparent 70%);pointer-events:none}
+.hero{position:relative;overflow:hidden;color:#eef7f3;border:1px solid rgba(6,194,144,.28);border-radius:18px;padding:26px;
+  background:radial-gradient(900px 420px at 88% -30%,rgba(4,159,119,.30),transparent 60%),linear-gradient(155deg,#0c1f18 0%,#0d1a24 55%,#0f1c2a 100%)}
+.hero .lbl{font-size:12px;color:#8fd9c0;text-transform:uppercase;letter-spacing:1.4px;font-weight:700}
+.hero .big{font-size:clamp(38px,6vw,58px);font-weight:800;letter-spacing:-2px;margin:8px 0 4px;line-height:1;color:#fff;text-shadow:0 2px 24px rgba(6,194,144,.25)}
+.hero .note{font-size:12.5px;color:#9db4c6;margin-top:10px;max-width:46ch;line-height:1.55}
+.hero-grid{display:grid;grid-template-columns:1.25fr .95fr;gap:24px;align-items:stretch}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr}}
+.proxbox{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column}
+.proxbox .plbl{font-size:11px;color:#8fd9c0;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px}
+.proxbox .pnum{font-size:15.5px;color:#7ef0c6;word-break:break-all;line-height:1.35;font-weight:600}
+.copybtn{align-self:flex-start;margin-top:9px;background:none;border:1px solid rgba(255,255,255,.22);color:#cfe6dd;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.copybtn:hover{border-color:#06c290;color:#7ef0c6}
+.hero-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:auto;padding-top:14px}
+.hero .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.24);color:#eef7f3}
+.hero .btn.ghost:hover{border-color:#06c290;color:#7ef0c6}
+.mini-stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.mini-stat .ms-lbl{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:700;margin-bottom:5px}
+.mini-stat b{font-size:19px;letter-spacing:-.4px}
+.mini-stat .sub{font-size:11px;margin-top:3px}
 
 .bar{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;display:flex;margin-top:10px}
 .bar > span{display:block;height:100%}
@@ -173,55 +196,44 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 <header class="top">
   <div class="top-in">
     <div class="logo">
-      <div class="mark">MX</div>
-      <div>PERDCOMP<small>Controle de créditos &amp; compensações</small></div>
+      <img src="data:image/png;base64,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" alt="MAXIMOS Soluções Empresariais">
+      <div>MX PERDCOMP<small>MAXIMOS · créditos &amp; compensações</small></div>
     </div>
     <div class="grow"></div>
-    <span class="pill" id="empresaPill">🏢 <span id="empresaNome">DF CAMPOS</span></span>
+    <span class="pill" id="empresaPill"><span id="empresaNome">DF CAMPOS</span></span>
     <span class="pill" id="modePill"><span class="dot" id="modeDot"></span><span id="modeTxt">Local</span></span>
-    <button class="iconbtn" id="btnTheme" title="Tema claro/escuro">🌓</button>
-    <button class="iconbtn" id="btnConfig" title="Conexão / configurações">⚙️</button>
+    <button class="iconbtn" id="btnTheme" title="Tema claro/escuro" aria-label="Alternar tema"></button>
+    <button class="iconbtn" id="btnConfig" title="Conexão / configurações" aria-label="Configurações"></button>
   </div>
   <nav class="tabs" id="tabs">
-    <button data-tab="painel" class="active">📊 Painel</button>
-    <button data-tab="creditos">💰 Créditos <span class="badge" id="bCred">0</span></button>
-    <button data-tab="compensacoes">🔗 Compensações <span class="badge" id="bComp">0</span></button>
-    <button data-tab="ajuda">❔ Como usar</button>
+    <button data-tab="painel" data-ic="chart" class="active">Painel</button>
+    <button data-tab="creditos" data-ic="wallet">Créditos <span class="badge" id="bCred">0</span></button>
+    <button data-tab="compensacoes" data-ic="link">Compensações <span class="badge" id="bComp">0</span></button>
+    <button data-tab="ajuda" data-ic="help">Como usar</button>
   </nav>
 </header>
 
 <main>
   <!-- ===================== PAINEL ===================== -->
   <section class="view active" id="view-painel">
-    <div class="grid g-hero" style="margin-bottom:14px">
-      <div class="card hero">
-        <div class="glow"></div>
-        <div class="lbl">Saldo disponível para PERDCOMP</div>
-        <div class="big mono" id="heroSaldo">R$ 0,00</div>
-        <div class="note" id="heroNote">Saldo da <b>ponta da corrente</b> — a última transmissão de PER/DCOMP (o valor que o e-CAC mostra em aberto). Os saldos anteriores já foram carregados adiante e não se somam.</div>
-      </div>
-      <div class="card">
-        <h3>Próximo nº a utilizar</h3>
-        <div class="stat sm mono" id="proxNumero" style="font-size:15px;word-break:break-all">—</div>
-        <div class="sub" id="proxInfo">Último número resultante gerado na cadeia.</div>
-        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn" id="btnNovaComp">+ Compensação</button>
-          <button class="btn ghost" id="btnNovoCred">+ Crédito</button>
+    <div class="hero" style="margin-bottom:14px">
+      <div class="hero-grid">
+        <div>
+          <div class="lbl">Saldo disponível para PER/DCOMP</div>
+          <div class="big mono" id="heroSaldo">R$ 0,00</div>
+          <div class="note" id="heroNote">Saldo da <b style="color:#cfe6dd">ponta da corrente</b> — o valor em aberto no e-CAC. Saldos anteriores já foram carregados adiante e não se somam.</div>
+        </div>
+        <div class="proxbox">
+          <div class="plbl">Próximo nº a utilizar</div>
+          <div class="pnum mono" id="proxNumero">—</div>
+          <button class="copybtn" id="btnCopyProx" aria-label="Copiar número"></button>
+          <div class="sub" id="proxInfo" style="margin-top:8px;color:#9db4c6">—</div>
+          <div class="hero-actions">
+            <button class="btn" id="btnNovaComp">+ Compensação</button>
+            <button class="btn ghost" id="btnNovoCred">+ Crédito</button>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="grid g4" style="margin-bottom:14px">
-      <div class="card"><h3>Crédito gerado</h3><div class="stat mono" id="kGerado">R$ 0</div><div class="sub">Soma dos saldos credores originais</div></div>
-      <div class="card"><h3>Débitos lançados</h3><div class="stat mono" id="kUsado">R$ 0</div><div class="sub" id="kUsadoSub">0 compensações</div></div>
-      <div class="card"><h3>Uso Fiscal</h3><div class="stat mono" style="color:var(--fiscal)" id="kFiscal">R$ 0</div><div class="sub" id="kFiscalSub">0 lançamentos</div></div>
-      <div class="card"><h3>Uso Folha</h3><div class="stat mono" style="color:var(--folha)" id="kFolha">R$ 0</div><div class="sub" id="kFolhaSub">0 lançamentos</div></div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <h3>Consumo do crédito</h3>
-      <div class="bar" id="consBar"></div>
-      <div class="legend" id="consLegend"></div>
     </div>
 
     <div id="alertas"></div>
@@ -234,6 +246,18 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
           <th>Data</th><th>Descrição</th><th>Nº resultante</th><th class="num">Saldo após</th><th>Situação</th>
         </tr></thead><tbody></tbody></table>
       </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3>Resumo dos números</h3>
+      <div class="grid g4" style="margin:10px 0 14px">
+        <div class="mini-stat"><span class="ms-lbl">Crédito gerado</span><b class="mono" id="kGerado">R$ 0</b><div class="sub">Saldos credores originais</div></div>
+        <div class="mini-stat"><span class="ms-lbl">Débitos lançados</span><b class="mono" id="kUsado">R$ 0</b><div class="sub" id="kUsadoSub">0 compensações</div></div>
+        <div class="mini-stat"><span class="ms-lbl">Uso Fiscal</span><b class="mono" style="color:var(--fiscal)" id="kFiscal">R$ 0</b><div class="sub" id="kFiscalSub">0 lançamentos</div></div>
+        <div class="mini-stat"><span class="ms-lbl">Uso Folha</span><b class="mono" style="color:var(--folha)" id="kFolha">R$ 0</b><div class="sub" id="kFolhaSub">0 lançamentos</div></div>
+      </div>
+      <div class="bar" id="consBar"></div>
+      <div class="legend" id="consLegend"></div>
     </div>
 
     <div class="card">
@@ -298,8 +322,8 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
         <li><b>Por que não é “gerado menos usado”?</b> → o crédito rende SELIC e alguns débitos são quitados só em parte; o valor confiável é o <b>saldo após</b> do último elo de cada corrente, como no e-CAC.</li>
       </ul>
       <h3 style="margin-top:18px">Modo compartilhado (Supabase)</h3>
-      <p style="color:var(--mut);font-size:13.5px">Clique em <b>⚙️</b> e informe a URL e a chave <i>anon</i> do projeto Supabase. A partir daí folha e fiscal editam a <b>mesma base em tempo real</b>. Sem configurar, o app funciona em <b>modo local</b> (neste navegador) já com os dados da DF CAMPOS.</p>
-      <div class="callout info" style="margin-top:8px">ℹ️ Rode <kbd>?teste=1</kbd> na URL para executar o autoteste dos cálculos.</div>
+      <p style="color:var(--mut);font-size:13.5px">Clique no botão de <b>configurações</b> (ícone de ajustes, no topo) e informe a URL e a chave <i>anon</i> do projeto Supabase. A partir daí folha e fiscal editam a <b>mesma base em tempo real</b>. Sem configurar, o app funciona em <b>modo local</b> (neste navegador) já com os dados da DF CAMPOS.</p>
+      <div class="callout info" style="margin-top:8px"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12" y2="8.01"/></svg> Rode <kbd>?teste=1</kbd> na URL para executar o autoteste dos cálculos.</div>
     </div>
   </section>
 </main>
@@ -338,7 +362,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
         <div class="field full"><label>Observação</label><textarea id="cObs" rows="2" placeholder="retificações, vínculos, etc."></textarea></div>
         <div class="field full"><label>Anexos — comprovante DCOMP, PDF/imagem</label>
           <div id="compAnexos" class="anexos"></div>
-          <label class="mini" style="cursor:pointer;display:inline-block">📎 anexar arquivo<input type="file" id="compFile" accept="application/pdf,image/*" hidden multiple></label>
+          <label class="mini" style="cursor:pointer;display:inline-block"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> anexar arquivo<input type="file" id="compFile" accept="application/pdf,image/*" hidden multiple></label>
         </div>
       </div>
       <div id="compWarn"></div>
@@ -363,7 +387,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
         <div class="field full"><label>Observação</label><textarea id="rObs" rows="2"></textarea></div>
         <div class="field full"><label>Anexos — comprovante PER, PDF/imagem</label>
           <div id="credAnexos" class="anexos"></div>
-          <label class="mini" style="cursor:pointer;display:inline-block">📎 anexar arquivo<input type="file" id="credFile" accept="application/pdf,image/*" hidden multiple></label>
+          <label class="mini" style="cursor:pointer;display:inline-block"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> anexar arquivo<input type="file" id="credFile" accept="application/pdf,image/*" hidden multiple></label>
         </div>
       </div>
     </div>
@@ -386,7 +410,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 <div class="overlay" id="ovCfg">
   <div class="modal"><header><h2>Conexão &amp; dados</h2><button class="x" data-close>×</button></header>
     <div class="body">
-      <div class="callout info" style="margin-bottom:14px">🔗 <div><b>Modo compartilhado (Supabase):</b> preencha para que folha e fiscal usem a mesma base em tempo real. Vazio = modo local neste navegador.</div></div>
+      <div class="callout info" style="margin-bottom:14px"><div><b>Modo compartilhado (Supabase):</b> preencha para que folha e fiscal usem a mesma base em tempo real. Vazio = modo local neste navegador.</div></div>
       <div class="formgrid">
         <div class="field full"><label>Supabase URL</label><input id="sbUrl" placeholder="https://xxxx.supabase.co"></div>
         <div class="field full"><label>Supabase anon key</label><input id="sbKey" placeholder="eyJhbGciOi..."></div>
@@ -399,11 +423,11 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
       <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
       <div style="font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Dados</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn ghost" id="btnExportJson">⬇ Exportar JSON</button>
-        <button class="btn ghost" id="btnExportCsv">⬇ Exportar CSV (Excel)</button>
-        <button class="btn ghost" id="btnPrint">🖨 Imprimir / PDF</button>
-        <button class="btn ghost" id="btnReseed">↻ Recarregar dados DF CAMPOS</button>
-        <label class="btn ghost" style="cursor:pointer">⬆ Importar JSON<input type="file" id="fileImport" accept="application/json" hidden></label>
+        <button class="btn ghost" id="btnExportJson">Exportar JSON</button>
+        <button class="btn ghost" id="btnExportCsv">Exportar CSV (Excel)</button>
+        <button class="btn ghost" id="btnPrint">Imprimir / PDF</button>
+        <button class="btn ghost" id="btnReseed">Recarregar dados DF CAMPOS</button>
+        <label class="btn ghost" style="cursor:pointer"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="m7 8 5-5 5 5"/><path d="M4 20h16"/></svg> Importar JSON<input type="file" id="fileImport" accept="application/json" hidden></label>
       </div>
     </div>
     <footer><button class="btn ghost" data-close>Fechar</button></footer>
@@ -443,6 +467,31 @@ function fmtData(d){if(!d)return '—';var p=(''+d).split('-');if(p.length===3)r
 function fmtComp(c){if(!c)return '—';if(/^\d{4}-\d{2}$/.test(c)){var p=c.split('-');var m=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];return m[+p[1]-1]+'/'+p[0];}return c;}
 function esc(s){return (s==null?'':''+s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function toast(msg,err){var t=$('#toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(function(){t.className='toast';},2600);}
+
+/* ---------- Ícones SVG (traço 2px, estilo Lucide) ---------- */
+var ICONS={
+  chart:'<path d="M3 3v18h18"/><line x1="8" y1="17" x2="8" y2="11"/><line x1="13" y1="17" x2="13" y2="7"/><line x1="18" y1="17" x2="18" y2="13"/>',
+  wallet:'<path d="M20 7H5a2 2 0 0 1 0-4h11v4"/><path d="M20 7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><circle cx="17" cy="14" r="1"/>',
+  link:'<path d="M9 12h6"/><path d="M9 8H7a4 4 0 0 0 0 8h2"/><path d="M15 8h2a4 4 0 0 1 0 8h-2"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.4 9a2.6 2.6 0 1 1 3.6 2.4c-.8.35-1 .9-1 1.8"/><line x1="12" y1="16.6" x2="12" y2="16.61"/>',
+  settings:'<line x1="4" y1="7.5" x2="20" y2="7.5"/><circle cx="9.5" cy="7.5" r="2.3"/><line x1="4" y1="16.5" x2="20" y2="16.5"/><circle cx="14.5" cy="16.5" r="2.3"/>',
+  moon:'<path d="M20 13.6A8.2 8.2 0 1 1 10.4 4 6.4 6.4 0 0 0 20 13.6z"/>',
+  warn:'<path d="M10.3 4.2 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9.5" x2="12" y2="13.5"/><line x1="12" y1="16.8" x2="12" y2="16.81"/>',
+  info:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12" y2="8.01"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="m8.4 12.3 2.4 2.4 4.8-5.2"/>',
+  clip:'<path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/>',
+  file:'<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="m21 15.5-4.5-4.5L7 20"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  down:'<path d="M12 3v11"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/>',
+  up:'<path d="M12 15V4"/><path d="m7 8 5-5 5 5"/><path d="M4 20h16"/>',
+  print:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><rect x="7" y="14" width="10" height="7"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>'
+};
+function ic(name,size){
+  size=size||16;
+  return '<svg class="ic" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';
+}
 
 /* ---------- Cálculos ---------- */
 function compTotal(c){ if(typeof c.valor_total==='number')return c.valor_total; return (c.debitos||[]).reduce(function(s,d){return s+(Number(d.valor)||0);},0); }
@@ -647,13 +696,13 @@ function renderPainel(){
   var al=[];
   abertos.forEach(function(c){
     var mp=mesesParado(c.data);
-    al.push({t:'warn',h:'⚠️ Saldo de <b>'+BRL(c.saldo_apos)+'</b> em <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'sem nº')+', '+fmtData(c.data)+(mp!=null&&mp>=6?', parado '+mp+'m':'')+') aparece em aberto mas <b>não é a ponta atual</b> da corrente. Confirme no e-CAC: se já foi usado, edite a compensação e zere o "saldo após"; se é um crédito separado ainda válido, ele soma ao disponível.'});
+    al.push({t:'warn',h:ic('warn',15)+' Saldo de <b>'+BRL(c.saldo_apos)+'</b> em <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'sem nº')+', '+fmtData(c.data)+(mp!=null&&mp>=6?', parado '+mp+'m':'')+') aparece em aberto mas <b>não é a ponta atual</b> da corrente. Confirme no e-CAC: se já foi usado, edite a compensação e zere o "saldo após"; se é um crédito separado ainda válido, ele soma ao disponível.'});
   });
   livres.forEach(function(cr){
-    al.push({t:'info',h:'ℹ️ Crédito de <b>'+fmtComp(cr.competencia)+'</b> (<b>'+BRL(valorCreditoLivre(cr))+'</b>) apurado e <b>ainda não declarado</b> em PER/DCOMP — não entra no disponível até ser usado numa compensação.'});
+    al.push({t:'info',h:ic('info',15)+' Crédito de <b>'+fmtComp(cr.competencia)+'</b> (<b>'+BRL(valorCreditoLivre(cr))+'</b>) apurado e <b>ainda não declarado</b> em PER/DCOMP — não entra no disponível até ser usado numa compensação.'});
   });
-  if(!al.length) al.push({t:'ok',h:'✓ Corrente conferida. Disponível hoje: <b>'+BRL(disp)+'</b>'+(pn?' na ponta '+esc(pn.num):'')+'.'});
-  else al.unshift({t:'ok',h:'✓ <b>Disponível hoje: '+BRL(disp)+'</b> (saldo da ponta da corrente). Abaixo, itens a conferir que <b>não</b> estão somados nesse valor.'});
+  if(!al.length) al.push({t:'ok',h:ic('check',15)+' Corrente conferida. Disponível hoje: <b>'+BRL(disp)+'</b>'+(pn?' na ponta '+esc(pn.num):'')+'.'});
+  else al.unshift({t:'ok',h:ic('check',15)+' <b>Disponível hoje: '+BRL(disp)+'</b> (saldo da ponta da corrente). Abaixo, itens a conferir que <b>não</b> estão somados nesse valor.'});
   $('#alertas').innerHTML=al.map(function(a){return '<div class="callout '+a.t+'" style="margin-bottom:14px">'+a.h+'</div>';}).join('');
 
   // ultimas
@@ -674,7 +723,7 @@ function renderCreditos(){
   var list=state.creditos.slice().sort(function(a,b){return (a.competencia||'').localeCompare(b.competencia||'');});
   list=list.filter(function(c){return !q || (c.competencia||'').toLowerCase().indexOf(q)>=0 || (c.perd_inicial||'').toLowerCase().indexOf(q)>=0;});
   var tb=$('#tblCred tbody');
-  if(!list.length){tb.innerHTML='<tr><td colspan="6" class="empty"><div class="em">💰</div>Nenhum crédito</td></tr>';$('#bCred').textContent=state.creditos.length;return;}
+  if(!list.length){tb.innerHTML='<tr><td colspan="6" class="empty"><div class="em">'+ic('wallet',34)+'</div>Nenhum crédito</td></tr>';$('#bCred').textContent=state.creditos.length;return;}
   var used=numerosUsados();
   tb.innerHTML=list.map(function(c){
     var vo=Number(c.valor_original)||0;
@@ -707,7 +756,7 @@ function renderCompensacoes(){
     return hay.toLowerCase().indexOf(q)>=0;
   });
   var tb=$('#tblComp tbody');
-  if(!list.length){tb.innerHTML='<tr><td colspan="8" class="empty"><div class="em">🔗</div>Nenhuma compensação</td></tr>';return;}
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" class="empty"><div class="em">'+ic('link',34)+'</div>Nenhuma compensação</td></tr>';return;}
   tb.innerHTML=list.map(function(c){
     var deb=(c.debitos||[]).length;
     var resumo=(c.debitos||[]).slice(0,3).map(function(d){return esc(d.descricao||d.darf);}).join(', ')+(deb>3?' +'+(deb-3):'');
@@ -763,7 +812,7 @@ function idbDel(id){idb(function(db){db.transaction('files','readwrite').objectS
 
 var pendingAnexos={comp:[],cred:[]};
 function human(b){b=Number(b)||0;if(b<1024)return b+' B';if(b<1048576)return Math.round(b/1024)+' KB';return (b/1048576).toFixed(1)+' MB';}
-function anexoIcon(t){t=t||'';return t.indexOf('pdf')>=0?'📄':t.indexOf('image')>=0?'🖼️':'📎';}
+function anexoIcon(t){t=t||'';return ic(t.indexOf('pdf')>=0?'file':t.indexOf('image')>=0?'image':'clip',13);}
 function anexosRender(ctx){
   var box=$('#'+(ctx==='comp'?'compAnexos':'credAnexos'));
   var list=pendingAnexos[ctx]||[];
@@ -816,7 +865,7 @@ function anexoOpen(id){
     });
   }
 }
-function anexosBadge(r){var n=(r.anexos||[]).length;return n?'<span class="clip">📎'+n+'</span>':'';}
+function anexosBadge(r){var n=(r.anexos||[]).length;return n?'<span class="clip">'+ic('clip',11)+n+'</span>':'';}
 
 /* ---------- Modal helpers ---------- */
 function show(sel){$(sel).classList.add('show');}
@@ -979,8 +1028,22 @@ function saveCfgAndConnect(){
 function useLocalMode(){online=false;sb=null;cfg.url='';cfg.key='';saveCfg();loadLocal();setModeUI();renderAll();hide('#ovCfg');toast('Modo local ativo');}
 
 /* ---------- Init ---------- */
+function decorate(){
+  $all('#tabs button').forEach(function(b){if(b.dataset.ic)b.insertAdjacentHTML('afterbegin',ic(b.dataset.ic,16)+' ');});
+  $('#btnTheme').innerHTML=ic('moon',18);
+  $('#btnConfig').innerHTML=ic('settings',18);
+  $('#btnCopyProx').innerHTML=ic('copy',14)+' copiar nº';
+  var m={btnExportJson:'down',btnExportCsv:'down',btnPrint:'print',btnReseed:'refresh'};
+  Object.keys(m).forEach(function(id){var b=document.getElementById(id);if(b)b.innerHTML=ic(m[id],15)+' '+b.textContent.replace(/^[^\w]+/,'');});
+}
 function bind(){
   $('#tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)go(b.dataset.tab);});
+  $('#btnCopyProx').onclick=function(){
+    var n=$('#proxNumero').textContent;
+    if(!n||n==='—'){toast('Nenhum número para copiar',true);return;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(n).then(function(){toast('Número copiado: '+n);},function(){toast('Não foi possível copiar',true);});}
+    else{var ta=document.createElement('textarea');ta.value=n;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Número copiado');}catch(e){toast('Não foi possível copiar',true);}ta.remove();}
+  };
   $('#btnTheme').onclick=function(){var r=document.documentElement;var t=r.getAttribute('data-theme')==='light'?'dark':'light';r.setAttribute('data-theme',t);localStorage.setItem('mxperdcomp_theme',t);};
   $('#btnConfig').onclick=openCfg;
   $('#btnNovaComp').onclick=function(){openComp(null);};
@@ -1010,7 +1073,7 @@ function bind(){
 
 function init(){
   var th=localStorage.getItem('mxperdcomp_theme');if(th)document.documentElement.setAttribute('data-theme',th);
-  loadCfg();bind();
+  loadCfg();bind();decorate();
   if(cfg.url&&cfg.key){ // tenta online
     connectSupabase(function(ok){ if(!ok){loadLocal();} setModeUI();renderAll();maybeTest(); });
   }else{
