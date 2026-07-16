@@ -403,7 +403,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 
 <!-- ============ MODAL: COMPENSAÇÃO ============ -->
 <div class="overlay" id="ovComp">
-  <div class="modal wide"><header><h2 id="compTitle">Nova compensação</h2><button class="x" data-close>×</button></header>
+  <div class="modal wide"><header><h2 id="compTitle">Nova compensação</h2><button class="mini" id="btnIaFillComp" style="margin-left:12px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> Preencher com PDF (IA)</button><button class="x" data-close>×</button></header>
     <div class="body">
       <div class="formgrid">
         <div class="field"><label for="cData">Data da transmissão</label><input type="date" id="cData"></div>
@@ -447,7 +447,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 
 <!-- ============ MODAL: CRÉDITO ============ -->
 <div class="overlay" id="ovCred">
-  <div class="modal"><header><h2 id="credTitle">Novo crédito</h2><button class="x" data-close>×</button></header>
+  <div class="modal"><header><h2 id="credTitle">Novo crédito</h2><button class="mini" id="btnIaFillCred" style="margin-left:12px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> Preencher com PDF (IA)</button><button class="x" data-close>×</button></header>
     <div class="body">
       <div class="formgrid">
         <div class="field"><label>Competência</label><input id="rComp" placeholder="AAAA-MM ex.: 2026-05"></div>
@@ -494,7 +494,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
       <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
       <div style="font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">IA — leitura de PDF (DeepSeek)</div>
       <div class="formgrid">
-        <div class="field full"><label for="dsKey">Chave da API DeepSeek (fica só neste navegador, não vai para o banco)</label><input id="dsKey" type="password" placeholder="sk-..." autocomplete="off"></div>
+        <div class="field full"><label for="dsKey">Chave DeepSeek pessoal (opcional — reserva; o app usa primeiro a chave da equipe guardada no servidor)</label><input id="dsKey" type="password" placeholder="sk-..." autocomplete="off"></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px"><button class="btn ghost" id="btnSaveDs">Salvar chave</button></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
@@ -515,7 +515,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 <div class="overlay" id="ovIA">
   <div class="modal wide"><header><h2>Ler PDF do PER/DCOMP (IA)</h2><button class="x" data-close>×</button></header>
     <div class="body">
-      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b>. A IA localiza <b>cada PER/DCOMP</b>, traz <b>o código e o saldo</b> de cada um com o total, e <b>lança sozinha no sistema</b>: o que for novo é criado, saldo divergente é atualizado, e o que já confere fica como está. Tudo entra marcado como "IA (PDF)" e pode ser editado. O lançamento manual continua no botão <b>+ Compensação</b>. <b>O PDF precisa ter texto</b> (baixado do e-CAC); documento escaneado/foto não é lido — anexe-o como comprovante.</div></div>
+      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b>. A IA localiza <b>cada PER/DCOMP</b>, traz <b>o código e o saldo</b> de cada um com o total, e <b>lança sozinha no sistema</b>: o que for novo é criado, saldo divergente é atualizado, e o que já confere fica como está. Tudo entra marcado como "IA (PDF)" e pode ser editado. O lançamento manual continua no botão <b>+ Compensação</b> (que também tem "Preencher com PDF"). A IA usa a <b>chave da equipe no servidor</b> — ninguém precisa configurar nada. <b>O PDF precisa ter texto</b> (baixado do e-CAC); documento escaneado/foto não é lido — anexe-o como comprovante.</div></div>
       <div class="formgrid">
         <div class="field full"><label for="iaFile">Arquivo PDF</label><input type="file" id="iaFile" accept="application/pdf"></div>
       </div>
@@ -529,6 +529,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
   </div>
 </div>
 
+<input type="file" id="iaFillFile" accept="application/pdf" hidden>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1244,42 +1245,105 @@ function dsParse(o){
   }).filter(function(p){return p.numero;});
 }
 var _iaUltimo=[];
+/* Backend de IA: 1o tenta a chave da EQUIPE no servidor (Edge Function ia-proxy,
+   chave no cofre do Supabase - ninguem ve); sem chave no servidor,
+   usa a chave pessoal salva neste navegador como reserva. */
+function iaBackend(prompt,cb){
+  function local(){
+    var key=dsGetKey();
+    if(!key){cb(new Error('Sem chave de IA disponível: peça ao administrador para configurar a chave da equipe no servidor, ou salve uma chave pessoal nas configurações.'));return;}
+    fetch('https://api.deepseek.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'deepseek-chat',temperature:0,response_format:{type:'json_object'},
+        messages:[{role:'system',content:'Você extrai dados de documentos fiscais brasileiros. Responda apenas JSON válido.'},{role:'user',content:prompt}]})
+    }).then(function(r){
+      if(!r.ok)throw new Error('API DeepSeek: HTTP '+r.status+(r.status===401?' (chave inválida?)':''));
+      return r.json();
+    }).then(function(j){
+      cb(null,(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'');
+    }).catch(cb);
+  }
+  if(online&&sb&&sb.functions){
+    sb.functions.invoke('ia-proxy',{body:{prompt:prompt}}).then(function(r){
+      if(r.error||!r.data){local();return;}
+      if(r.data.error==='no-key'){local();return;}
+      if(r.data.error){cb(new Error('IA (servidor): '+r.data.error));return;}
+      cb(null,r.data.content||'');
+    },function(){local();});
+  }else local();
+}
+function iaPrompt(texto){
+  return 'Extraia do texto de documento(s) PER/DCOMP da Receita Federal abaixo TODOS os PER/DCOMP mencionados. Responda SOMENTE este JSON: {"perdcomps":[{"numero":"00000.00000.000000.0.0.00-0000","tipo_documento":"","tipo_credito":"","competencia_credito":"MM/AAAA","valor_credito_original":0,"valor_utilizado":0,"saldo":0,"data_transmissao":"DD/MM/AAAA","debitos":[{"codigo":"","descricao":"","periodo":"MM/AAAA","valor":0}]}]}. Valores como número com ponto decimal. "saldo" = Saldo do Crédito Original (crédito menos utilizado) quando informado; se não houver, calcule crédito−utilizado; se impossível, null. Campo ausente = null. TEXTO: '+texto.slice(0,30000);
+}
+// pipeline completo: PDF -> texto -> IA -> itens normalizados. cb(err, itens)
+function iaExtrair(file,cb){
+  loadPdfJs(function(){
+    extractPdfText(file,function(err,texto){
+      if(err){cb(err);return;}
+      texto=(texto||'').replace(/\s+/g,' ').trim();
+      if(texto.length<100){cb(new Error('PDF_SEM_TEXTO'));return;}
+      iaBackend(iaPrompt(texto),function(err2,content){
+        if(err2){cb(err2);return;}
+        var obj;try{obj=JSON.parse(content);}catch(e){var m=content.match(/\{[\s\S]*\}/);obj=m?JSON.parse(m[0]):null;}
+        cb(null,dsParse(obj));
+      });
+    });
+  });
+}
+function iaMsgErro(e){return e&&e.message==='PDF_SEM_TEXTO'?'Este PDF é digitalizado (imagem, sem texto) — a IA não consegue ler. Baixe a versão original do e-CAC ou anexe como comprovante.':'Erro: '+((e&&e.message)||e);}
 function iaAnalisar(){
   var f=$('#iaFile').files[0];
   if(!f){iaStatus('Escolha um arquivo PDF.',true);return;}
-  var key=dsGetKey();
-  if(!key){iaStatus('Configure a chave DeepSeek primeiro (botão de configurações no topo).',true);return;}
   $('#iaResultado').innerHTML='';
   var _b=$('#btnIaLer');_b.disabled=true;_b.style.opacity='.6';_b.textContent='Analisando…';
   function fim(){_b.disabled=false;_b.style.opacity='';_b.textContent='Analisar documento';}
-  iaStatus('Lendo o PDF…');
-  loadPdfJs(function(){
-    extractPdfText(f,function(err,texto){
-      if(err){fim();iaStatus('Erro ao ler o PDF: '+err.message,true);return;}
-      texto=(texto||'').replace(/\s+/g,' ').trim();
-      if(texto.length<100){
-        fim();iaStatus('Este PDF é digitalizado (imagem, sem texto) — a IA não consegue ler. Baixe a versão original do e-CAC ou anexe como comprovante.',true);
-        return;
-      }
-      iaStatus('Consultando a IA (DeepSeek)…');
-      var prompt='Extraia do texto de documento(s) PER/DCOMP da Receita Federal abaixo TODOS os PER/DCOMP mencionados. Responda SOMENTE este JSON: {"perdcomps":[{"numero":"00000.00000.000000.0.0.00-0000","tipo_documento":"","tipo_credito":"","competencia_credito":"MM/AAAA","valor_credito_original":0,"valor_utilizado":0,"saldo":0,"data_transmissao":"DD/MM/AAAA","debitos":[{"codigo":"","descricao":"","periodo":"MM/AAAA","valor":0}]}]}. Valores como número com ponto decimal. "saldo" = Saldo do Crédito Original (crédito menos utilizado) quando informado; se não houver, calcule crédito−utilizado; se impossível, null. Campo ausente = null. TEXTO: '+texto.slice(0,30000);
-      fetch('https://api.deepseek.com/chat/completions',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'deepseek-chat',temperature:0,response_format:{type:'json_object'},
-          messages:[{role:'system',content:'Você extrai dados de documentos fiscais brasileiros. Responda apenas JSON válido.'},{role:'user',content:prompt}]})
-      }).then(function(r){
-        if(!r.ok)throw new Error('API DeepSeek: HTTP '+r.status+(r.status===401?' (chave inválida?)':''));
-        return r.json();
-      }).then(function(j){
-        var content=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||'';
-        var obj;try{obj=JSON.parse(content);}catch(e){var m=content.match(/\{[\s\S]*\}/);obj=m?JSON.parse(m[0]):null;}
-        var itens=dsParse(obj);
-        fim();
-        if(!itens.length){iaStatus('A IA não encontrou nenhum PER/DCOMP no documento.',true);return;}
-        _iaUltimo=itens;iaStatus('');renderIaResultado(itens);
-      }).catch(function(e){fim();iaStatus('Erro: '+e.message,true);});
-    });
+  iaStatus('Lendo o PDF e consultando a IA…');
+  iaExtrair(f,function(err,itens){
+    fim();
+    if(err){iaStatus(iaMsgErro(err),true);return;}
+    if(!itens.length){iaStatus('A IA não encontrou nenhum PER/DCOMP no documento.',true);return;}
+    _iaUltimo=itens;iaStatus('');renderIaResultado(itens);
+  });
+}
+/* Preencher formulários abertos com PDF (compensação e crédito) */
+var _iaFillCtx=null;
+function iaFillPick(ctx){_iaFillCtx=ctx;var i=$('#iaFillFile');i.value='';i.click();}
+function iaAplicarComp(p){
+  var dataIso=null;var m=(p.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);if(m)dataIso=m[3]+'-'+m[2]+'-'+m[1];
+  var compIso='';var mc=(p.competencia||'').match(/(\d{2})\/(\d{4})/);if(mc)compIso=mc[2]+'-'+mc[1];
+  $('#cData').value=dataIso||new Date().toISOString().slice(0,10);
+  $('#cComp').value=compIso;
+  $('#cDesc').value=(p.tipo||'PER/DCOMP')+(compIso?' '+fmtComp(compIso):'');
+  $('#cIni').value=p.numero||'';
+  $('#cSaldo').value=p.saldo!=null?String(p.saldo).replace('.',','):'';
+  var dl2=$('#debList');dl2.innerHTML='';
+  ((p.debitos&&p.debitos.length)?p.debitos:[{}]).forEach(function(d){dl2.appendChild(debRow({descricao:d.descricao||'',darf:d.darf||'',valor:d.valor!=null?d.valor:''}));});
+  recalcDeb();
+}
+function iaAplicarCred(p){
+  var dataIso=null;var m=(p.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);if(m)dataIso=m[3]+'-'+m[2]+'-'+m[1];
+  var compIso='';var mc=(p.competencia||'').match(/(\d{2})\/(\d{4})/);if(mc)compIso=mc[2]+'-'+mc[1];
+  if(compIso)$('#rComp').value=compIso;
+  if(p.credito!=null)$('#rValor').value=String(p.credito).replace('.',',');
+  if(p.numero)$('#rPerd').value=p.numero;
+  if(dataIso)$('#rData').value=dataIso;
+  if(p.saldo!=null)$('#rSaldoManual').value=String(p.saldo).replace('.',',');
+  $('#rObs').value='Preenchido pela IA (PDF)'+(p.tipo?' — '+p.tipo:'');
+}
+function iaFillRun(file){
+  var btn=_iaFillCtx==='comp'?$('#btnIaFillComp'):$('#btnIaFillCred');
+  var txt=btn?btn.innerHTML:null;
+  if(btn){btn.disabled=true;btn.textContent='Lendo PDF…';}
+  toast('IA lendo o PDF…');
+  iaExtrair(file,function(err,itens){
+    if(btn){btn.disabled=false;btn.innerHTML=txt;}
+    if(err){toast(iaMsgErro(err),true);return;}
+    if(!itens.length){toast('A IA não encontrou PER/DCOMP no documento',true);return;}
+    var p=itens[0];
+    itens.some(function(x){if(x.saldo!=null&&x.saldo>0.005){p=x;return true;}return false;});
+    if(_iaFillCtx==='comp')iaAplicarComp(p);else iaAplicarCred(p);
+    toast('Preenchido pela IA'+(itens.length>1?' (usei o PER/DCOMP com saldo entre '+itens.length+')':'')+' — revise e salve');
   });
 }
 function iaSituacao(p){
@@ -1359,18 +1423,7 @@ function iaLancarTudo(){
 }
 function iaPreLancar(i){
   var p=_iaUltimo[i];if(!p)return;
-  hide('#ovIA');
-  openComp(null);
-  var dataIso=null;var m=(p.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);if(m)dataIso=m[3]+'-'+m[2]+'-'+m[1];
-  var compIso='';var mc=(p.competencia||'').match(/(\d{2})\/(\d{4})/);if(mc)compIso=mc[2]+'-'+mc[1];
-  $('#cData').value=dataIso||new Date().toISOString().slice(0,10);
-  $('#cComp').value=compIso;
-  $('#cDesc').value=(p.tipo||'PER/DCOMP')+(compIso?' '+fmtComp(compIso):'');
-  $('#cIni').value=p.numero;
-  $('#cSaldo').value=p.saldo!=null?String(p.saldo).replace('.',','):'';
-  var dl2=$('#debList');dl2.innerHTML='';
-  ((p.debitos&&p.debitos.length)?p.debitos:[{}]).forEach(function(d){dl2.appendChild(debRow({descricao:d.descricao||'',darf:d.darf||'',valor:d.valor!=null?d.valor:''}));});
-  recalcDeb();
+  hide('#ovIA');openComp(null);iaAplicarComp(p);
   toast('Formulário pré-preenchido pela IA — revise e salve');
 }
 
@@ -1423,10 +1476,14 @@ function bind(){
   $('#btnSaveCfg').onclick=saveCfgAndConnect;
   $('#btnLocalMode').onclick=useLocalMode;
   $('#btnLerPdf').onclick=function(){
-    $('#iaFile').value='';$('#iaResultado').innerHTML='';iaStatus(dsGetKey()?'':'Configure a chave DeepSeek primeiro (⚙ configurações).',!dsGetKey());
+    $('#iaFile').value='';$('#iaResultado').innerHTML='';
+    iaStatus((online||dsGetKey())?'':'Sem conexão e sem chave pessoal — configure nas configurações.',!(online||dsGetKey()));
     show('#ovIA');
   };
   $('#btnIaLer').onclick=iaAnalisar;
+  $('#btnIaFillComp').onclick=function(){iaFillPick('comp');};
+  $('#btnIaFillCred').onclick=function(){iaFillPick('cred');};
+  $('#iaFillFile').addEventListener('change',function(e){if(e.target.files[0])iaFillRun(e.target.files[0]);});
   $('#btnSaveDs').onclick=function(){
     var k=$('#dsKey').value.trim();
     if(k){localStorage.setItem(DS_LSKEY,k);toast('Chave DeepSeek salva neste navegador');}
