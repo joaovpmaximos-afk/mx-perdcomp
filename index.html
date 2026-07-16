@@ -7,22 +7,24 @@
 <title>MX PERDCOMP — Controle de Créditos e Compensações</title>
 <style>
 :root{
-  --bg:#0a1017; --bg2:#0d1520; --card:#111a25; --card2:#172230; --line:#22303f;
-  --txt:#e9eff6; --mut:#8fa3b8; --mut2:#647a90;
+  --bg:#0a0f15; --bg2:#0c131b; --card:#101720; --card2:#161f2a; --line:#1e2936;
+  --txt:#edf2f7; --mut:#93a5b8; --mut2:#5f7288;
   --brand:#049f77; --brand2:#06c290; --brandbg:#0b2a21;
-  --ok:#10c98d; --okbg:#0b2a21;
-  --warn:#e2a63b; --warnbg:#2d2310; --dang:#e05a5a; --dangbg:#331717;
-  --fiscal:#3aa0ff; --fiscalbg:#12283d; --folha:#b07cff; --folhabg:#241a3a;
-  --shadow:0 10px 32px rgba(2,8,16,.45);
+  --ok:#10c98d; --okbg:rgba(16,201,141,.10);
+  --warn:#e2a63b; --warnbg:rgba(226,166,59,.10); --dang:#e05a5a; --dangbg:rgba(224,90,90,.10);
+  --fiscal:#3aa0ff; --fiscalbg:rgba(58,160,255,.12); --folha:#b07cff; --folhabg:rgba(176,124,255,.12);
+  --ring:rgba(6,194,144,.35); --radius:12px;
+  --shadow:0 1px 2px rgba(2,8,16,.5),0 8px 28px rgba(2,8,16,.35);
 }
 :root[data-theme="light"]{
-  --bg:#f1f5f8; --bg2:#e8eef4; --card:#ffffff; --card2:#f3f7fa; --line:#dce5ee;
-  --txt:#13202e; --mut:#5a6b7d; --mut2:#8496a8;
+  --bg:#f4f7fa; --bg2:#eaf0f5; --card:#ffffff; --card2:#f2f6f9; --line:#e2e9f0;
+  --txt:#101c29; --mut:#5a6b7d; --mut2:#8a9bab;
   --brand:#04916d; --brand2:#037a5b; --brandbg:#e1f4ec;
-  --ok:#0a9e6f; --okbg:#e1f4ec;
-  --warn:#b97e14; --warnbg:#fbf1da; --dang:#d84848; --dangbg:#fbe7e7;
-  --fiscal:#1a73e8; --fiscalbg:#e3eefd; --folha:#7d4fd6; --folhabg:#efe6fd;
-  --shadow:0 6px 24px rgba(30,50,80,.10);
+  --ok:#0a9e6f; --okbg:rgba(10,158,111,.10);
+  --warn:#b97e14; --warnbg:rgba(185,126,20,.10); --dang:#d84848; --dangbg:rgba(216,72,72,.09);
+  --fiscal:#1a73e8; --fiscalbg:rgba(26,115,232,.10); --folha:#7d4fd6; --folhabg:rgba(125,79,214,.10);
+  --ring:rgba(4,145,109,.30); --radius:12px;
+  --shadow:0 1px 2px rgba(30,50,80,.06),0 8px 24px rgba(30,50,80,.08);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -41,7 +43,7 @@ header.top{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,va
 button .ic{margin-right:2px}
 :focus-visible{outline:2px solid var(--brand2);outline-offset:2px;border-radius:6px}
 .btn:active,.iconbtn:active,.mini:active{transform:scale(.97)}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 .grow{flex:1}
 .pill{font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mut);display:inline-flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--mut2)}
@@ -53,6 +55,16 @@ nav.tabs{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:4px;flex
 nav.tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:7px}
 .callout .ic{flex:none;margin-top:2px}
 .empty .em svg{opacity:.45}
+#tblSaldos tbody tr,#tblVivas tbody tr{animation:rowIn .3s ease both}
+#tblSaldos tbody tr:nth-child(1),#tblVivas tbody tr:nth-child(1){animation-delay:.02s}
+#tblSaldos tbody tr:nth-child(2),#tblVivas tbody tr:nth-child(2){animation-delay:.06s}
+#tblSaldos tbody tr:nth-child(3),#tblVivas tbody tr:nth-child(3){animation-delay:.10s}
+#tblSaldos tbody tr:nth-child(4),#tblVivas tbody tr:nth-child(4){animation-delay:.14s}
+#tblSaldos tbody tr:nth-child(5),#tblVivas tbody tr:nth-child(5){animation-delay:.18s}
+#tblSaldos tbody tr:nth-child(6),#tblVivas tbody tr:nth-child(6){animation-delay:.22s}
+#tblSaldos tbody tr:nth-child(7),#tblVivas tbody tr:nth-child(7){animation-delay:.26s}
+#tblSaldos tbody tr:nth-child(8),#tblVivas tbody tr:nth-child(8){animation-delay:.30s}
+@keyframes rowIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .clip .ic{vertical-align:-2px;margin-right:2px}
 nav.tabs button:hover{color:var(--txt)}
 nav.tabs button.active{color:var(--brand);border-color:var(--brand)}
@@ -72,16 +84,24 @@ main{max-width:1180px;margin:0 auto;padding:20px 18px 80px}
 @media(max-width:860px){.g-hero,.g4,.g3,.g2{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.g4{grid-template-columns:1fr}}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);transition:border-color .2s}
+.card:hover{border-color:color-mix(in srgb,var(--line) 60%,var(--brand) 40%)}
 .card h3{margin:0 0 3px;font-size:13px;color:var(--mut);font-weight:600;letter-spacing:.2px;text-transform:uppercase;font-size:11px}
 .stat{font-size:26px;font-weight:800;letter-spacing:-.5px}
 .stat.sm{font-size:20px}
 .sub{color:var(--mut);font-size:12px;margin-top:3px}
 
-.hero{position:relative;overflow:hidden;color:#eef7f3;border:1px solid rgba(6,194,144,.28);border-radius:18px;padding:26px;
+.hero{position:relative;overflow:hidden;color:#eef7f3;border:1px solid rgba(6,194,144,.22);border-radius:18px;padding:26px;
   background:radial-gradient(900px 420px at 88% -30%,rgba(4,159,119,.30),transparent 60%),linear-gradient(155deg,#0c1f18 0%,#0d1a24 55%,#0f1c2a 100%)}
+.hero::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 20%,rgba(6,194,144,.65) 40%,rgba(126,240,198,.9) 50%,rgba(6,194,144,.65) 60%,transparent 80%);
+  background-size:250% 100%;animation:heroSweep 7s linear infinite;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+@keyframes heroSweep{0%{background-position:250% 0}100%{background-position:-250% 0}}
 .hero .lbl{font-size:12px;color:#8fd9c0;text-transform:uppercase;letter-spacing:1.4px;font-weight:700}
-.hero .big{font-size:clamp(38px,6vw,58px);font-weight:800;letter-spacing:-2px;margin:8px 0 4px;line-height:1;color:#fff;text-shadow:0 2px 24px rgba(6,194,144,.25)}
+.hero .big{font-size:clamp(38px,6vw,58px);font-weight:800;letter-spacing:-2px;margin:8px 0 4px;line-height:1.05;
+  background:linear-gradient(92deg,#ffffff 30%,#9df3d3 75%,#7ef0c6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 18px rgba(6,194,144,.22))}
 .hero .note{font-size:12.5px;color:#9db4c6;margin-top:10px;max-width:46ch;line-height:1.55}
 .hero-grid{display:grid;grid-template-columns:1.25fr .95fr;gap:24px;align-items:stretch}
 @media(max-width:760px){.hero-grid{grid-template-columns:1fr}}
@@ -108,11 +128,14 @@ main{max-width:1180px;margin:0 auto;padding:20px 18px 80px}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
 table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
 th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);font-weight:600;position:sticky;top:0;background:var(--card2);z-index:1}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut2);font-weight:600;position:sticky;top:0;background:var(--card2);z-index:1}
 tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--card2)}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:color-mix(in srgb,var(--card2) 55%,transparent)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-.tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.3px}
+.tag{font-size:10.5px;font-weight:600;padding:2.5px 9px;border-radius:999px;letter-spacing:.3px;display:inline-flex;align-items:center;gap:4px;border:1px solid transparent}
+.tag.ok{border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.tag.warn{border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
 .tag.fiscal{background:var(--fiscalbg);color:var(--fiscal)}
 .tag.folha{background:var(--folhabg);color:var(--folha)}
 .tag.ok{background:var(--okbg);color:var(--ok)}
@@ -129,25 +152,30 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 /* Toolbar */
 .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .toolbar .grow{min-width:120px}
-input,select,textarea{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 11px;font-size:13.5px;outline:none;width:100%;font-family:inherit}
-input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+input,select,textarea{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 11px;font-size:13.5px;outline:none;width:100%;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+input::placeholder,textarea::placeholder{color:var(--mut2)}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:11.5px;color:var(--mut);font-weight:600}
 .seg{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
 .seg button{background:none;border:none;color:var(--mut);padding:8px 13px;cursor:pointer;font-size:12.5px;font-weight:600}
 .seg button.active{background:var(--brand);color:#fff}
-.btn{background:var(--brand);color:#fff;border:none;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:13.5px;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+.btn{position:relative;overflow:hidden;background:var(--brand);color:#fff;border:none;border-radius:10px;height:38px;padding:0 16px;cursor:pointer;font-size:13.5px;font-weight:600;display:inline-flex;gap:8px;align-items:center;justify-content:center;transition:background .15s,transform .1s,box-shadow .15s;box-shadow:0 1px 2px rgba(2,8,16,.3)}
 .btn:hover{background:var(--brand2)}
-.btn.ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
-.btn.ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-20deg);transition:left .5s ease;pointer-events:none}
+.btn:hover::after{left:130%}
+.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:var(--brand);color:var(--brand2);background:var(--brandbg)}
+.btn.ghost::after{display:none}
 .btn.danger{background:var(--dang)}
 
 /* Modal */
-.overlay{position:fixed;inset:0;background:rgba(6,12,20,.62);backdrop-filter:blur(3px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:30px 14px;overflow-y:auto}
+.overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);backdrop-filter:blur(5px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:30px 14px;overflow-y:auto;animation:ovIn .15s ease}
 .overlay.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:680px;animation:pop .2s ease}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px rgba(2,8,16,.55);width:100%;max-width:680px;animation:dlgIn .2s cubic-bezier(.16,1,.3,1)}
 .modal.wide{max-width:900px}
-@keyframes pop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes dlgIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
 .modal header{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
 .modal header h2{margin:0;font-size:16px}
 .modal .body{padding:20px;max-height:70vh;overflow-y:auto}
@@ -177,7 +205,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
 .anexo-chip .an-del{cursor:pointer;color:var(--mut2);font-weight:700}
 .anexo-chip .an-del:hover{color:var(--dang)}
 .clip{font-size:11px;color:var(--mut);margin-left:5px}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:10px;padding:12px 18px;box-shadow:var(--shadow);z-index:200;opacity:0;transition:.3s;font-size:13.5px;max-width:90vw}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--card);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:10px;padding:12px 18px;box-shadow:0 12px 40px rgba(2,8,16,.5);z-index:200;opacity:0;transition:transform .25s cubic-bezier(.16,1,.3,1),opacity .25s;font-size:13.5px;max-width:90vw}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .toast.err{border-left-color:var(--dang)}
 
@@ -725,10 +753,31 @@ function go(tab){
 }
 
 /* ---------- Render Painel ---------- */
+/* count-up do saldo (estilo ReactBits): anima entre o valor anterior e o novo */
+var _heroVal=null,_heroRaf=null;
+function animateHero(alvo){
+  var el=$('#heroSaldo');
+  var reduz=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(_heroVal==null||reduz||document.visibilityState!=='visible'||Math.abs(alvo-_heroVal)<0.005){
+    el.textContent=BRL(alvo);_heroVal=alvo;return;
+  }
+  if(_heroRaf)cancelAnimationFrame(_heroRaf);
+  var de=_heroVal,ini=null,dur=700;
+  function passo(ts){
+    if(ini==null)ini=ts;
+    var t=Math.min(1,(ts-ini)/dur);
+    var e=1-Math.pow(1-t,3); // easeOutCubic
+    el.textContent=BRL(de+(alvo-de)*e);
+    if(t<1)_heroRaf=requestAnimationFrame(passo);
+    else{el.textContent=BRL(alvo);_heroVal=alvo;_heroRaf=null;}
+  }
+  _heroRaf=requestAnimationFrame(passo);
+  _heroVal=alvo;
+}
 function renderPainel(){
   var ger=totalGerado(), usa=totalUsado(), disp=saldoDisponivel();
   var ativas=pontasAtivas(), paradas=pontasParadas(), livres=creditosNaoUsados();
-  $('#heroSaldo').textContent=BRL(disp);
+  animateHero(disp);
   $('#kGerado').textContent=BRLk(ger);
   $('#kUsado').textContent=BRLk(usa);
   $('#kUsadoSub').textContent=state.compensacoes.length+' compensações (débitos podem incluir SELIC/quitação parcial)';
