@@ -5,91 +5,91 @@
  "creditos": [
   {
    "id": "C01",
-   "competencia": "2026-08",
+   "competencia": "2022-08",
    "valor_original": 22402.5,
    "perd_inicial": "07459.44083.081222.1.3.15-0615",
    "ultima_data": null
   },
   {
    "id": "C02",
-   "competencia": "2026-01",
+   "competencia": "2025-01",
    "valor_original": 0,
    "perd_inicial": null,
    "ultima_data": null
   },
   {
    "id": "C03",
-   "competencia": "2026-02",
+   "competencia": "2025-02",
    "valor_original": 15765.21,
    "perd_inicial": "01235.18047.100325.1.3.15-9676",
    "ultima_data": null
   },
   {
    "id": "C04",
-   "competencia": "2026-03",
+   "competencia": "2025-03",
    "valor_original": 52932.05,
    "perd_inicial": "33060.50388.090525.1.3.15-4155",
    "ultima_data": null
   },
   {
    "id": "C05",
-   "competencia": "2026-04",
+   "competencia": "2025-04",
    "valor_original": 13783.06,
    "perd_inicial": "39829.07392.110226.1.3.15-3600",
    "ultima_data": null
   },
   {
    "id": "C06",
-   "competencia": "2026-05",
+   "competencia": "2025-05",
    "valor_original": 0,
-   "perd_inicial": "42779.15396.220626.1.3.15-1025",
+   "perd_inicial": null,
    "ultima_data": null
   },
   {
    "id": "C07",
-   "competencia": "2026-06",
+   "competencia": "2025-06",
    "valor_original": 0,
    "perd_inicial": null,
    "ultima_data": null
   },
   {
    "id": "C08",
-   "competencia": "2026-07",
+   "competencia": "2025-07",
    "valor_original": 39769.47,
    "perd_inicial": "17375.54243.220825.1.3.15-4990",
    "ultima_data": null
   },
   {
    "id": "C09",
-   "competencia": "2026-08",
+   "competencia": "2025-08",
    "valor_original": 43095.09,
    "perd_inicial": "41611.25637.120925.1.3.15-4540",
    "ultima_data": null
   },
   {
    "id": "C10",
-   "competencia": "2026-09",
+   "competencia": "2025-09",
    "valor_original": 73469.91,
    "perd_inicial": "39490.07400.151025.1.3.15-7880",
    "ultima_data": null
   },
   {
    "id": "C11",
-   "competencia": "2026-10",
+   "competencia": "2025-10",
    "valor_original": 22188.64,
    "perd_inicial": "14074.48805.121125.1.3.15-3806",
    "ultima_data": null
   },
   {
    "id": "C12",
-   "competencia": "2026-11",
+   "competencia": "2025-11",
    "valor_original": 42454.23,
    "perd_inicial": "30927.18256.151225.1.3.15-1325",
    "ultima_data": null
   },
   {
    "id": "C13",
-   "competencia": "2026-12",
+   "competencia": "2025-12",
    "valor_original": 35537.88,
    "perd_inicial": "05788.24955.130126.1.3.15-6514",
    "ultima_data": null
@@ -146,22 +146,22 @@
    "debitos": [
     {
      "descricao": "COFINS",
-     "darf": "2172-01-01 00:00:00",
+     "darf": "2172-01",
      "valor": 8616.99
     },
     {
      "descricao": "CSLL",
-     "darf": "2372-01-01 00:00:00",
+     "darf": "2372-01",
      "valor": 12736.86
     },
     {
      "descricao": "IRPJ",
-     "darf": "2089-01-01 00:00:00",
+     "darf": "2089-01",
      "valor": 14597.77
     },
     {
      "descricao": "PIS",
-     "darf": "8109-02-01 00:00:00",
+     "darf": "8109-02",
      "valor": 1867.01
     }
    ],
@@ -182,27 +182,27 @@
    "debitos": [
     {
      "descricao": "PIS",
-     "darf": "8109-02-01 00:00:00",
+     "darf": "8109-02",
      "valor": 1055.73
     },
     {
      "descricao": "COFINS",
-     "darf": "2172-01-01 00:00:00",
+     "darf": "2172-01",
      "valor": 4872.6
     },
     {
      "descricao": "IRPJ 1º quota 1º Trimestre",
-     "darf": "2089-01-01 00:00:00",
+     "darf": "2089-01",
      "valor": 20606.19
     },
     {
      "descricao": "CSLL 1º quota 1º Trimestre",
-     "darf": "2372-01-01 00:00:00",
+     "darf": "2372-01",
      "valor": 6668.2
     },
     {
      "descricao": "CSLL 1º quota 1º Trimestre",
-     "darf": "2372-01-01 00:00:00",
+     "darf": "2372-01",
      "valor": 1346.41
     }
    ],
@@ -225,12 +225,12 @@
    "debitos": [
     {
      "descricao": "PIS",
-     "darf": "8109-02-01 00:00:00",
+     "darf": "8109-02",
      "valor": 1658.48
     },
     {
      "descricao": "COFINS",
-     "darf": "2172-01-01 00:00:00",
+     "darf": "2172-01",
      "valor": 7654.53
     }
    ],
@@ -251,12 +251,12 @@
    "debitos": [
     {
      "descricao": "IRPJ 2º quota 1º Trimestre",
-     "darf": "2089-01-01 00:00:00",
+     "darf": "2089-01",
      "valor": 20812.25
     },
     {
      "descricao": "CSLL 2º quota 1º Trimestre",
-     "darf": "2372-01-01 00:00:00",
+     "darf": "2372-01",
      "valor": 8219.6
     },
     {
@@ -289,7 +289,7 @@
    "debitos": [
     {
      "descricao": "PIS",
-     "darf": "8109-02-01 00:00:00",
+     "darf": "8109-02",
      "valor": 3755.37
     },
     {
@@ -626,7 +626,7 @@
    "debitos": [
     {
      "descricao": "PIS",
-     "darf": "8109-02-01 00:00:00",
+     "darf": "8109-02",
      "valor": 7540.97
     }
    ],
