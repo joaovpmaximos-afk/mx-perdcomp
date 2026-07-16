@@ -455,7 +455,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 <div class="overlay" id="ovIA">
   <div class="modal wide"><header><h2>Ler PDF do PER/DCOMP (IA)</h2><button class="x" data-close>×</button></header>
     <div class="body">
-      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b> (recibo, declaração ou consulta). A IA (DeepSeek) localiza <b>cada PER/DCOMP com saldo</b>, o valor e o código, soma o total e confere com o que está no sistema. <b>O PDF precisa ter texto</b> (baixado do e-CAC); documento escaneado/foto não é lido — anexe-o como comprovante no lançamento.</div></div>
+      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b>. A IA localiza <b>cada PER/DCOMP</b>, traz <b>o código e o saldo</b> de cada um com o total, e <b>lança sozinha no sistema</b>: o que for novo é criado, saldo divergente é atualizado, e o que já confere fica como está. Tudo entra marcado como "IA (PDF)" e pode ser editado. O lançamento manual continua no botão <b>+ Compensação</b>. <b>O PDF precisa ter texto</b> (baixado do e-CAC); documento escaneado/foto não é lido — anexe-o como comprovante.</div></div>
       <div class="formgrid">
         <div class="field full"><label>Arquivo PDF</label><input type="file" id="iaFile" accept="application/pdf"></div>
       </div>
@@ -1196,28 +1196,80 @@ function iaAnalisar(){
     });
   });
 }
+function iaSituacao(p){
+  // compara o PER/DCOMP do documento com o que está no sistema
+  var m=null;
+  state.compensacoes.forEach(function(c){
+    var n=c.dcomp_resultante||c.dcomp_inicial;
+    if(!m&&(n===p.numero||c.dcomp_inicial===p.numero||c.dcomp_resultante===p.numero||(c.inis_internos||[]).indexOf(p.numero)>=0)) m=c;
+  });
+  if(!m) return {st:'novo',comp:null};
+  var dono=(m.dcomp_resultante||m.dcomp_inicial)===p.numero||(m.dcomp_inicial===p.numero&&!m.dcomp_resultante);
+  if(dono&&p.saldo!=null&&m.saldo_apos!=null&&Math.abs(Number(m.saldo_apos)-p.saldo)>0.01) return {st:'divergente',comp:m};
+  return {st:'ok',comp:m};
+}
 function renderIaResultado(itens){
-  var usados=numerosConsumidos();
-  var todos={};state.compensacoes.forEach(function(c){if(c.dcomp_inicial)todos[c.dcomp_inicial]=1;if(c.dcomp_resultante)todos[c.dcomp_resultante]=1;(c.inis_internos||[]).forEach(function(n){todos[n]=1;});});
-  state.creditos.forEach(function(cr){if(cr.perd_inicial)todos[cr.perd_inicial]=1;});
-  var rows='',total=0,nSaldo=0;
-  itens.forEach(function(p,i){
-    var noSistema=todos[p.numero]?(usados[p.numero]?'<span class="tag zero">no sistema</span>':'<span class="tag ok">no sistema · ponta</span>'):'<span class="tag warn">NOVO</span>';
+  var rows='',total=0,nSaldo=0,temAcao=false;
+  itens.forEach(function(p){
+    var sit=iaSituacao(p);
     var temSaldoP=p.saldo!=null&&p.saldo>0.005;
     if(temSaldoP){total+=p.saldo;nSaldo++;}
+    if(sit.st!=='ok')temAcao=true;
+    var tag=sit.st==='novo'?'<span class="tag warn">novo — será lançado</span>':
+            sit.st==='divergente'?'<span class="tag warn">saldo difere ('+BRL(sit.comp.saldo_apos)+' no sistema) — será atualizado</span>':
+            '<span class="tag ok">confere com o sistema</span>';
     rows+='<tr'+(temSaldoP?' style="background:var(--okbg)"':'')+'>'+
-      '<td class="num-code">'+esc(p.numero)+'</td>'+
+      '<td class="num-code" style="font-weight:600">'+esc(p.numero)+'</td>'+
       '<td>'+esc(p.tipo||'—')+' <span class="sub">'+esc(p.competencia||'')+'</span></td>'+
-      '<td class="num mono">'+(p.credito!=null?BRL(p.credito):'—')+'</td>'+
-      '<td class="num mono">'+(p.utilizado!=null?BRL(p.utilizado):'—')+'</td>'+
-      '<td class="num mono"'+(temSaldoP?' style="color:var(--ok);font-weight:800"':'')+'>'+(p.saldo!=null?BRL(p.saldo):'—')+'</td>'+
-      '<td>'+noSistema+(todos[p.numero]?'':' <button class="mini" onclick="iaPreLancar('+i+')">pré-lançar</button>')+'</td></tr>';
+      '<td class="num mono"'+(temSaldoP?' style="color:var(--ok);font-weight:800;font-size:15px"':'')+'>'+(p.saldo!=null?BRL(p.saldo):'—')+'</td>'+
+      '<td>'+tag+'</td></tr>';
   });
   $('#iaResultado').innerHTML=
     '<div class="callout '+(nSaldo?'ok':'info')+'" style="margin-bottom:10px">'+ic(nSaldo?'check':'info',15)+' '+
-      (nSaldo?('<b>'+nSaldo+' PER/DCOMP com saldo</b> · Total: <b>'+BRL(total)+'</b>'):'Nenhum PER/DCOMP com saldo neste documento.')+'</div>'+
-    '<div class="tablewrap"><table><thead><tr><th>Nº PER/DCOMP</th><th>Crédito</th><th class="num">Original</th><th class="num">Utilizado</th><th class="num">Saldo</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div class="sub" style="margin-top:8px">Confira sempre com o e-CAC. "Pré-lançar" abre o formulário de compensação já preenchido — nada é salvo sem você confirmar.</div>';
+      (nSaldo?('<b>'+nSaldo+' PER/DCOMP com saldo</b> · Total no documento: <b>'+BRL(total)+'</b>'):'Nenhum PER/DCOMP com saldo neste documento.')+'</div>'+
+    '<div class="tablewrap"><table><thead><tr><th>Código (Nº PER/DCOMP)</th><th>Crédito</th><th class="num">Saldo</th><th>Situação</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">'+
+      (temAcao?'<button class="btn" id="btnIaLancar">'+ic('check',15)+' Lançar no sistema</button>':'<span class="tag ok">nada a lançar — tudo já confere</span>')+
+      '<span class="sub">Novos são lançados e saldos divergentes atualizados automaticamente; tudo fica marcado como "IA (PDF)" e pode ser editado depois.</span></div>';
+  if(temAcao)$('#btnIaLancar').onclick=iaLancarTudo;
+}
+function inferirDepIA(debitos){
+  var folha={'1138':1,'1646':1,'1082':1,'1099':1,'1170':1,'1176':1,'1200':1,'1225':1,'1162':1};
+  var eh=(debitos||[]).some(function(d){var m=String(d.darf||'').match(/^(\d{4})/);return m&&folha[m[1]];});
+  return eh?'FOLHA':'FISCAL';
+}
+function iaLancarTudo(){
+  var lanc=0,atual=0,confere=0,hoje=new Date().toISOString().slice(0,10);
+  _iaUltimo.forEach(function(p){
+    if(!p.numero)return;
+    var sit=iaSituacao(p);
+    if(sit.st==='ok'){confere++;return;}
+    if(sit.st==='divergente'){
+      sit.comp.saldo_apos=p.saldo;
+      sit.comp.obs=((sit.comp.obs||'')+' | saldo atualizado via PDF (IA) em '+fmtData(hoje)).replace(/^ \| /,'');
+      upsertCompRemote(sit.comp);atual++;return;
+    }
+    // novo: cria a compensação e vincula o crédito da competência (se estiver a declarar)
+    var dataIso=null;var m=(p.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);if(m)dataIso=m[3]+'-'+m[2]+'-'+m[1];
+    var compIso='';var mc=(p.competencia||'').match(/(\d{2})\/(\d{4})/);if(mc)compIso=mc[2]+'-'+mc[1];
+    var credito=null;
+    if(compIso){state.creditos.forEach(function(cr){if(!credito&&cr.competencia===compIso&&!cr.perd_inicial)credito=cr;});}
+    if(credito){credito.perd_inicial=p.numero;credito.ultima_data=dataIso;upsertCredRemote(credito);}
+    var debs=(p.debitos&&p.debitos.length)?p.debitos.map(function(d){return {descricao:d.descricao||'',darf:d.darf||'',valor:Number(d.valor)||0};}):[];
+    var obj={id:uid('d'),data:dataIso||hoje,competencia_debito:compIso||p.competencia||'',
+      departamento:inferirDepIA(debs),descricao:(p.tipo||'PER/DCOMP')+(compIso?' '+fmtComp(compIso):''),
+      debitos:debs,valor_total:debs.reduce(function(s,d){return s+d.valor;},0),
+      dcomp_inicial:p.numero,dcomp_resultante:null,inis_internos:[p.numero],
+      saldo_apos:p.saldo!=null?p.saldo:null,credito_id:credito?credito.id:null,
+      usuario:'IA (PDF)',obs:'Lançado automaticamente pela leitura do PDF'+(p.credito!=null?' — crédito original '+BRL(p.credito)+(p.utilizado!=null?' − utilizado '+BRL(p.utilizado):''):''),
+      anexos:[],criado_em:hoje};
+    state.compensacoes.push(obj);upsertCompRemote(obj);lanc++;
+  });
+  saveLocal();renderAll();
+  var msg=lanc+' lançado(s), '+atual+' saldo(s) atualizado(s), '+confere+' já conferia(m)';
+  toast('IA: '+msg);
+  renderIaResultado(_iaUltimo);
+  $('#iaResultado').insertAdjacentHTML('afterbegin','<div class="callout ok" style="margin-bottom:10px">'+ic('check',15)+' Feito: '+msg+'. Confira no painel — o saldo disponível já reflete o documento.</div>');
 }
 function iaPreLancar(i){
   var p=_iaUltimo[i];if(!p)return;
@@ -1351,6 +1403,18 @@ function maybeTest(){
   // parser da resposta da IA
   var iaT=dsParse({perdcomps:[{numero:'37751.16896.160726.1.3.15-8300',tipo_credito:'Retenção 9.711/98',valor_credito_original:13494.96,valor_utilizado:'10.267,38',saldo:3227.58,debitos:[{codigo:'8109-02',valor:10267.38}]},{sem_numero:true}]});
   ok('dsParse normaliza e filtra',iaT.length===1&&iaT[0].utilizado===10267.38&&iaT[0].debitos[0].darf==='8109-02');
+  // lançamento automático pela IA (offline durante o teste: nada vai ao servidor)
+  var _on=online;online=false;
+  _iaUltimo=[{numero:'88888.77777.170726.1.3.15-0001',tipo:'Teste IA',competencia:'06/2026',credito:1000,utilizado:400,saldo:600,data:'17/07/2026',debitos:[{darf:'8109-02',descricao:'PIS',valor:400}]}];
+  var antes2=state.compensacoes.length,disp2=saldoDisponivel();
+  iaLancarTudo();
+  ok('IA lança novo automaticamente (+600 no disponível)',state.compensacoes.length===antes2+1&&Math.abs(saldoDisponivel()-(disp2+600))<0.05);
+  iaLancarTudo();
+  ok('reprocessar o mesmo PDF não duplica',state.compensacoes.length===antes2+1);
+  _iaUltimo=[{numero:'88888.77777.170726.1.3.15-0001',tipo:'Teste IA',competencia:'06/2026',saldo:550,data:'17/07/2026',debitos:[]}];
+  iaLancarTudo();
+  ok('saldo divergente é atualizado (600→550)',Math.abs(Number(state.compensacoes[antes2].saldo_apos)-550)<0.01);
+  state.compensacoes.pop();_iaUltimo=[];online=_on;
   ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
   ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
   ok('fmtComp 2026-05',fmtComp('2026-05')==='mai/2026');
