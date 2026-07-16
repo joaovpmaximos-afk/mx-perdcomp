@@ -231,12 +231,23 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
           <div class="hero-actions">
             <button class="btn" id="btnNovaComp">+ Compensação</button>
             <button class="btn ghost" id="btnNovoCred">+ Crédito</button>
+            <button class="btn ghost" id="btnLerPdf">Ler PDF (IA)</button>
           </div>
         </div>
       </div>
     </div>
 
     <div id="alertas"></div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3>Saldos por PER/DCOMP</h3>
+      <div class="sub" style="margin-bottom:10px">Cada linha é um PER/DCOMP com saldo em aberto. As linhas verdes <b>somam</b> no disponível; paradas há 6+ meses ou créditos ainda não declarados ficam <b>fora do total</b> até serem confirmados/usados.</div>
+      <div class="tablewrap">
+        <table id="tblSaldos"><thead><tr>
+          <th>Nº PER/DCOMP</th><th>Origem</th><th>Última mov.</th><th class="num">Saldo</th><th></th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
 
     <div class="card" style="margin-bottom:14px">
       <h3>Extrato da corrente — como o saldo chegou até aqui</h3>
@@ -421,6 +432,12 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
         <button class="btn ghost" id="btnLocalMode">Usar modo local</button>
       </div>
       <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+      <div style="font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">IA — leitura de PDF (DeepSeek)</div>
+      <div class="formgrid">
+        <div class="field full"><label>Chave da API DeepSeek (fica só neste navegador, não vai para o banco)</label><input id="dsKey" type="password" placeholder="sk-..." autocomplete="off"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn ghost" id="btnSaveDs">Salvar chave</button></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
       <div style="font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Dados</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn ghost" id="btnExportJson">Exportar JSON</button>
@@ -429,6 +446,24 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
         <button class="btn ghost" id="btnReseed">Recarregar dados DF CAMPOS</button>
         <label class="btn ghost" style="cursor:pointer"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="m7 8 5-5 5 5"/><path d="M4 20h16"/></svg> Importar JSON<input type="file" id="fileImport" accept="application/json" hidden></label>
       </div>
+    </div>
+    <footer><button class="btn ghost" data-close>Fechar</button></footer>
+  </div>
+</div>
+
+<!-- ============ MODAL: LER PDF COM IA ============ -->
+<div class="overlay" id="ovIA">
+  <div class="modal wide"><header><h2>Ler PDF do PER/DCOMP (IA)</h2><button class="x" data-close>×</button></header>
+    <div class="body">
+      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b> (recibo, declaração ou consulta). A IA (DeepSeek) localiza <b>cada PER/DCOMP com saldo</b>, o valor e o código, soma o total e confere com o que está no sistema. <b>O PDF precisa ter texto</b> (baixado do e-CAC); documento escaneado/foto não é lido — anexe-o como comprovante no lançamento.</div></div>
+      <div class="formgrid">
+        <div class="field full"><label>Arquivo PDF</label><input type="file" id="iaFile" accept="application/pdf"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="btnIaLer">Analisar documento</button>
+        <span class="sub" id="iaStatus"></span>
+      </div>
+      <div id="iaResultado" style="margin-top:16px"></div>
     </div>
     <footer><button class="btn ghost" data-close>Fechar</button></footer>
   </div>
@@ -444,7 +479,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 "use strict";
 
 /* ---------- SEED: dados da DF CAMPOS ---------- */
-var SEED = {"empresa":"DF CAMPOS","gerado_em":"2026-07-14","fonte":"CONTROLE DE COMPENSACOES DF CAMPOS.xlsx (aba COMPENSACOES, 22/06/2026)","creditos":[{"id":"C01","competencia":"2022-08","valor_original":22402.5,"perd_inicial":"07459.44083.081222.1.3.15-0615","ultima_data":null},{"id":"C02","competencia":"2025-01","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C03","competencia":"2025-02","valor_original":15765.21,"perd_inicial":"01235.18047.100325.1.3.15-9676","ultima_data":null},{"id":"C04","competencia":"2025-03","valor_original":52932.05,"perd_inicial":"33060.50388.090525.1.3.15-4155","ultima_data":null},{"id":"C05","competencia":"2025-04","valor_original":13783.06,"perd_inicial":"39829.07392.110226.1.3.15-3600","ultima_data":null},{"id":"C06","competencia":"2025-05","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C07","competencia":"2025-06","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C08","competencia":"2025-07","valor_original":39769.47,"perd_inicial":"17375.54243.220825.1.3.15-4990","ultima_data":null},{"id":"C09","competencia":"2025-08","valor_original":43095.09,"perd_inicial":"41611.25637.120925.1.3.15-4540","ultima_data":null},{"id":"C10","competencia":"2025-09","valor_original":73469.91,"perd_inicial":"39490.07400.151025.1.3.15-7880","ultima_data":null},{"id":"C11","competencia":"2025-10","valor_original":22188.64,"perd_inicial":"14074.48805.121125.1.3.15-3806","ultima_data":null},{"id":"C12","competencia":"2025-11","valor_original":42454.23,"perd_inicial":"30927.18256.151225.1.3.15-1325","ultima_data":null},{"id":"C13","competencia":"2025-12","valor_original":35537.88,"perd_inicial":"05788.24955.130126.1.3.15-6514","ultima_data":null},{"id":"C14","competencia":"2026-01","valor_original":21166.16,"perd_inicial":"32488.53540.110226.1.3.15-2700","ultima_data":null},{"id":"C15","competencia":"2026-02","valor_original":9414.55,"perd_inicial":"41173.10498.180326.1.3.15-6502","ultima_data":null},{"id":"C16","competencia":"2026-03","valor_original":33903.69,"perd_inicial":"01694.07014.150426.1.3.15-2082","ultima_data":null},{"id":"C17","competencia":"2026-04","valor_original":51766.17,"perd_inicial":"33575.54118.180526.1.3.15-2439","ultima_data":null},{"id":"C18","competencia":"2026-05","valor_original":128150.84,"perd_inicial":"42779.15396.220626.1.3.15-1025","ultima_data":null},{"id":"C19","competencia":"2026-06","valor_original":13494.96,"perd_inicial":null,"ultima_data":null}],"compensacoes":[{"data":"2023-12-01","competencia_debito":"2023-12","departamento":"FISCAL","descricao":"COFINS","debitos":[{"descricao":"COFINS","darf":"2172-01","valor":8616.99},{"descricao":"CSLL","darf":"2372-01","valor":12736.86},{"descricao":"IRPJ","darf":"2089-01","valor":14597.77},{"descricao":"PIS","darf":"8109-02","valor":1867.01}],"valor_total":37818.63,"dcomp_inicial":"07478.54752.171224.1.7.15-0291","dcomp_resultante":"13159.52477.171224.1.7.15-3225","saldo_apos":10723.46,"obs":null,"inis_internos":["07478.54752.171224.1.7.15-0291"]},{"data":"2025-04-16","competencia_debito":"2025-03","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":1055.73},{"descricao":"COFINS","darf":"2172-01","valor":4872.6},{"descricao":"IRPJ 1º quota 1º Trimestre","darf":"2089-01","valor":20606.19},{"descricao":"CSLL 1º quota 1º Trimestre","darf":"2372-01","valor":6668.2},{"descricao":"CSLL 1º quota 1º Trimestre","darf":"2372-01","valor":1346.41}],"valor_total":34549.13,"dcomp_inicial":"28412.63264.070425.1.3.15-6779","dcomp_resultante":"07898.68641.160425.1.7.15-8727","saldo_apos":0.0,"obs":null,"inis_internos":["28412.63264.070425.1.3.15-6779","07459.44083.081222.1.3.15-0615","33529.45651.160425.1.3.15-8830"]},{"data":"2025-05-09","competencia_debito":"2025-04","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":1658.48},{"descricao":"COFINS","darf":"2172-01","valor":7654.53}],"valor_total":9313.01,"dcomp_inicial":"33060.50388.090525.1.3.15-4155","dcomp_resultante":"33506.64130.140525.1.3.15-0698","saldo_apos":43195.38,"obs":null,"inis_internos":["33060.50388.090525.1.3.15-4155"]},{"data":"2025-05-14","competencia_debito":"2025-03","departamento":"FISCAL","descricao":"IRPJ 2º quota 1º Trimestre","debitos":[{"descricao":"IRPJ 2º quota 1º Trimestre","darf":"2089-01","valor":20812.25},{"descricao":"CSLL 2º quota 1º Trimestre","darf":"2372-01","valor":8219.6},{"descricao":"INSS","darf":"FOLHA","valor":11674.69},{"descricao":"IRRF FOLHA","darf":"0561-07","valor":442.73}],"valor_total":41149.27,"dcomp_inicial":"33506.64130.140525.1.3.15-0698","dcomp_resultante":"15537.93029.180625.1.7.15-2283","saldo_apos":2342.83,"obs":null,"inis_internos":["33506.64130.140525.1.3.15-0698","25828.76010.140525.1.3.15-2990","31290.84410.180625.1.7.15-5973"]},{"data":null,"competencia_debito":"2025-05","departamento":"FOLHA","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":3755.37},{"descricao":"INSS - RETENÇÃO","darf":"1162-01","valor":610.5}],"valor_total":4365.87,"dcomp_inicial":"15537.93029.180625.1.7.15-2283","dcomp_resultante":"03196.16076.180625.1.3.15-6460","saldo_apos":0.0,"obs":null,"inis_internos":["15537.93029.180625.1.7.15-2283","03196.16076.180625.1.3.15-6460"]},{"data":"2025-09-12","competencia_debito":"2025-08","departamento":"FOLHA","descricao":"IRRF FOLHA","debitos":[{"descricao":"IRRF FOLHA","darf":"0561-07","valor":915.36}],"valor_total":915.36,"dcomp_inicial":"41611.25637.120925.1.3.15-4540","dcomp_resultante":null,"saldo_apos":0.0,"obs":null,"inis_internos":["41611.25637.120925.1.3.15-4540"]},{"data":"2025-10-15","competencia_debito":"2025-09","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1649.68},{"descricao":"PIS E COFINS","darf":"8109/2172","valor":9754.99},{"descricao":"IR E CSLL","darf":"2089/2372","valor":143844.51}],"valor_total":155249.18,"dcomp_inicial":"39490.07400.151025.1.3.15-7880","dcomp_resultante":"06764.90033.161025.1.3.15-6913","saldo_apos":0.0,"obs":null,"inis_internos":["39490.07400.151025.1.3.15-7880","39490.07400.151025.1.3.15-7880","00709.90149.161025.1.3.15-1222"]},{"data":"2025-11-12","competencia_debito":"2025-10","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1531.56},{"descricao":"PIS E COFINS","darf":"8109/2172","valor":36547.07}],"valor_total":38078.63,"dcomp_inicial":"14074.48805.121125.1.3.15-3806","dcomp_resultante":"41703.63990.241125.1.3.15-3824","saldo_apos":0.0,"obs":null,"inis_internos":["14074.48805.121125.1.3.15-3806","14074.48805.121125.1.3.15-3806"]},{"data":"2025-12-15","competencia_debito":"2025-11","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1044.86},{"descricao":"","darf":"8109","valor":7514.22},{"descricao":"","darf":"2172","valor":20938.11}],"valor_total":29497.19,"dcomp_inicial":"30927.18256.151225.1.3.15-1325","dcomp_resultante":"17639.70372.190126.1.7.15-0078","saldo_apos":0.0,"obs":null,"inis_internos":["30927.18256.151225.1.3.15-1325","38415.38814.191225.1.7.15-0525","00721.65114.191225.1.3.15-9642"]},{"data":"2025-12-15","competencia_debito":"13/2025","departamento":"FOLHA","descricao":"INSS - FOLHA","debitos":[{"descricao":"INSS - FOLHA","darf":"","valor":12929.23}],"valor_total":12929.23,"dcomp_inicial":"30927.18256.151225.1.3.15-1325","dcomp_resultante":"03687.56522.151225.1.3.15-7550","saldo_apos":28480.14,"obs":null,"inis_internos":["30927.18256.151225.1.3.15-1325"]},{"data":"2026-01-13","competencia_debito":"2025-12","departamento":"FISCAL","descricao":"Compensacao 2025-12","debitos":[{"descricao":"","darf":"0561-07","valor":1996.07},{"descricao":"","darf":"2172/8109/5952","valor":33541.81}],"valor_total":35537.88,"dcomp_inicial":"05788.24955.130126.1.3.15-6514","dcomp_resultante":"19231.10174.190126.1.3.15-7033","saldo_apos":0.0,"obs":null,"inis_internos":["05788.24955.130126.1.3.15-6514"]},{"data":"2026-02-11","competencia_debito":"2025-05","departamento":"FOLHA","descricao":"Correção per/dcomp errado de maio","debitos":[{"descricao":"Correção per/dcomp errado de maio","darf":"1138-01","valor":9226.5},{"descricao":"","darf":"1138-04","valor":1293.7},{"descricao":"","darf":"1646-01","valor":1383.98},{"descricao":"","darf":"1099-01","valor":711.54},{"descricao":"","darf":"1170-01","valor":1153.31},{"descricao":"","darf":"1200-01","valor":276.79},{"descricao":"","darf":"1225-01","valor":1153.31}],"valor_total":15199.13,"dcomp_inicial":"39829.07392.110226.1.3.15-3600","dcomp_resultante":null,"saldo_apos":0.0,"obs":null,"inis_internos":["39829.07392.110226.1.3.15-3600"]},{"data":"2026-02-11","competencia_debito":"2025-05","departamento":"FOLHA","descricao":"CP SEGURADOS - EMP","debitos":[{"descricao":"CP SEGURADOS - EMP","darf":"1082-01","valor":135.4},{"descricao":"CP TERCEIROS - INCRA","darf":"1176-01","valor":92.25}],"valor_total":227.65,"dcomp_inicial":"32488.53540.110226.1.3.15-2700","dcomp_resultante":null,"saldo_apos":20938.51,"obs":null,"inis_internos":["32488.53540.110226.1.3.15-2700"]},{"data":"2026-02-11","competencia_debito":"2025-06","departamento":"FOLHA","descricao":"CP PATRONAL - EMP","debitos":[{"descricao":"CP PATRONAL - EMP","darf":"1138-01","valor":4953.09},{"descricao":"CP PATRONAL - CONT","darf":"1138-04","valor":1280.9},{"descricao":"CP PATRONAL - GILRAT","darf":"1646-01","valor":1921.14},{"descricao":"CP TERCEIROS - SAL","darf":"1170-01","valor":1600.94},{"descricao":"CP TERCEIROS - INCRA","darf":"1176-01","valor":128.07},{"descricao":"CP TERCEIROS - SEBRAE","darf":"1200-01","valor":384.22},{"descricao":"CP TERCEIROS - SESCOOP","darf":"1225-01","valor":1600.94}],"valor_total":11869.3,"dcomp_inicial":"32488.53540.110226.1.3.15-2700","dcomp_resultante":"32431.47938.110226.1.3.15-4328","saldo_apos":9069.21,"obs":"RET - gerou nº 10343.38561.240226.1.7.15-1852","inis_internos":["32488.53540.110226.1.3.15-2700"]},{"data":"2026-02-11","competencia_debito":"2025-06","departamento":"FISCAL","descricao":"IRRF","debitos":[{"descricao":"IRRF","darf":"0561-07","valor":539.52}],"valor_total":539.52,"dcomp_inicial":"32431.47938.110226.1.3.15-4328","dcomp_resultante":"42085.57221.110226.1.3.15-8890","saldo_apos":8529.69,"obs":"RET - gerou nº 23604.37653.240226.1.7.15-1526","inis_internos":["32431.47938.110226.1.3.15-4328"]},{"data":"2026-02-24","competencia_debito":"2026-01","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":7540.97}],"valor_total":7540.97,"dcomp_inicial":"42085.57221.110226.1.3.15-8890","dcomp_resultante":"01986.30366.240226.1.3.15-0400","saldo_apos":988.72,"obs":null,"inis_internos":["42085.57221.110226.1.3.15-8890"]},{"data":"2026-03-18","competencia_debito":"2026-02","departamento":"FISCAL","descricao":"IRRF","debitos":[{"descricao":"IRRF","darf":"0561-07","valor":108.66}],"valor_total":108.66,"dcomp_inicial":null,"dcomp_resultante":"41173.10498.180326.1.3.15-6502","saldo_apos":9305.89,"obs":null,"inis_internos":[]},{"data":"2026-04-15","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"PIS/COFINS","debitos":[{"descricao":"PIS/COFINS","darf":"8109/2172","valor":9398.95}],"valor_total":9398.95,"dcomp_inicial":"41173.10498.180326.1.3.15-6502","dcomp_resultante":"33880.53422.150426.1.3.15-4824","saldo_apos":0.0,"obs":null,"inis_internos":["41173.10498.180326.1.3.15-6502"]},{"data":"2026-04-15","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"COFINS","debitos":[{"descricao":"COFINS","darf":"2172","valor":15072.67}],"valor_total":15072.67,"dcomp_inicial":null,"dcomp_resultante":"01694.07014.150426.1.3.15-2082","saldo_apos":24964.23,"obs":null,"inis_internos":[]},{"data":"2026-04-15","competencia_debito":"1º QUOTA 1º TRIM/26","departamento":"FISCAL","descricao":"CSLL","debitos":[{"descricao":"CSLL","darf":"2372","valor":1010.57}],"valor_total":1010.57,"dcomp_inicial":"01986.30366.240226.1.3.15-0400","dcomp_resultante":"30550.02806.150426.1.3.15-1729","saldo_apos":0.0,"obs":null,"inis_internos":["01986.30366.240226.1.3.15-0400"]},{"data":"2026-04-15","competencia_debito":"1º QUOTA 1º TRIM/26","departamento":"FISCAL","descricao":"CSLL","debitos":[{"descricao":"CSLL","darf":"2372","valor":24964.23}],"valor_total":24964.23,"dcomp_inicial":"01694.07014.150426.1.3.15-2082","dcomp_resultante":"30034.15214.150426.1.3.15-5218","saldo_apos":0.0,"obs":null,"inis_internos":["01694.07014.150426.1.3.15-2082"]},{"data":"2026-05-18","competencia_debito":"2026-04","departamento":"FISCAL","descricao":"PIS/COFINS","debitos":[{"descricao":"PIS/COFINS","darf":"8109/2172","valor":27012.65}],"valor_total":27012.65,"dcomp_inicial":null,"dcomp_resultante":"33575.54118.180526.1.3.15-2439","saldo_apos":24751.3,"obs":null,"inis_internos":[]},{"data":"2026-05-18","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"IRPJ","debitos":[{"descricao":"IRPJ","darf":"2089","valor":77077.26}],"valor_total":77077.26,"dcomp_inicial":"33575.54118.180526.1.3.15-2439","dcomp_resultante":"05837.87606.180526.1.3.15-7448","saldo_apos":2.48,"obs":"Perd-comp retificado nº 04928.00957.180526.1.7.15-0382","inis_internos":["33575.54118.180526.1.3.15-2439"]},{"data":"2026-06-22","competencia_debito":"2026-05","departamento":"FISCAL","descricao":"Pis e Cofins","debitos":[{"descricao":"Pis e Cofins","darf":"8109/2172","valor":20362.6}],"valor_total":20362.6,"dcomp_inicial":null,"dcomp_resultante":"42779.15396.220626.1.3.15-1025","saldo_apos":107788.24,"obs":null,"inis_internos":[]},{"data":"2026-06-22","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"IR e CSLL 3º quota 1º trimestre","debitos":[{"descricao":"IR e CSLL 3º quota 1º trimestre","darf":"2089/2372","valor":105167.92}],"valor_total":105167.92,"dcomp_inicial":"42779.15396.220626.1.3.15-1025","dcomp_resultante":"24017.71489.220626.1.3.15-6391","saldo_apos":2620.32,"obs":null,"inis_internos":["42779.15396.220626.1.3.15-1025"]}],"evidencias":["00709.90149.161025.1.3.15-1222","00721.65114.191225.1.3.15-9642","01235.18047.100325.1.3.15-9676","01694.07014.150426.1.3.15-2082","01928.62656.120625.1.3.15-7695","01986.30366.240226.1.3.15-0400","02536.88152.180325.1.3.15-0886","03196.16076.180625.1.3.15-6460","03687.56522.151225.1.3.15-7550","05788.24955.130126.1.3.15-6514","07459.44083.081222.1.3.15-0615","07478.54752.171224.1.7.15-0291","08575.42871.120625.1.3.15-7549","14074.48805.121125.1.3.15-3806","15537.93029.180625.1.7.15-2283","17375.54243.220825.1.3.15-4990","25828.76010.140525.1.3.15-2990","28412.63264.070425.1.3.15-6779","30927.18256.151225.1.3.15-1325","31024.01844.220925.1.3.15-4025","31290.84410.180625.1.7.15-5973","32431.47938.110226.1.3.15-4328","32488.53540.110226.1.3.15-2700","33060.50388.090525.1.3.15-4155","33506.64130.140525.1.3.15-0698","33529.45651.160425.1.3.15-8830","33575.54118.180526.1.3.15-2439","38415.38814.191225.1.7.15-0525","39490.07400.151025.1.3.15-7880","39829.07392.110226.1.3.15-3600","41173.10498.180326.1.3.15-6502","41611.25637.120925.1.3.15-4540","42085.57221.110226.1.3.15-8890","42779.15396.220626.1.3.15-1025"],"conferencia":{"total_gerado":619294.41,"total_debitos":714955.46,"disponivel_esperado":26841.22,"cadeias_vivas":3,"creditos_nao_usados":1}};
+var SEED = {"empresa":"DF CAMPOS","gerado_em":"2026-07-14","fonte":"CONTROLE DE COMPENSACOES DF CAMPOS.xlsx (aba COMPENSACOES, 22/06/2026)","creditos":[{"id":"C01","competencia":"2022-08","valor_original":22402.5,"perd_inicial":"07459.44083.081222.1.3.15-0615","ultima_data":null},{"id":"C02","competencia":"2025-01","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C03","competencia":"2025-02","valor_original":15765.21,"perd_inicial":"01235.18047.100325.1.3.15-9676","ultima_data":null},{"id":"C04","competencia":"2025-03","valor_original":52932.05,"perd_inicial":"33060.50388.090525.1.3.15-4155","ultima_data":null},{"id":"C05","competencia":"2025-04","valor_original":13783.06,"perd_inicial":"39829.07392.110226.1.3.15-3600","ultima_data":null},{"id":"C06","competencia":"2025-05","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C07","competencia":"2025-06","valor_original":0,"perd_inicial":null,"ultima_data":null},{"id":"C08","competencia":"2025-07","valor_original":39769.47,"perd_inicial":"17375.54243.220825.1.3.15-4990","ultima_data":null},{"id":"C09","competencia":"2025-08","valor_original":43095.09,"perd_inicial":"41611.25637.120925.1.3.15-4540","ultima_data":null},{"id":"C10","competencia":"2025-09","valor_original":73469.91,"perd_inicial":"39490.07400.151025.1.3.15-7880","ultima_data":null},{"id":"C11","competencia":"2025-10","valor_original":22188.64,"perd_inicial":"14074.48805.121125.1.3.15-3806","ultima_data":null},{"id":"C12","competencia":"2025-11","valor_original":42454.23,"perd_inicial":"30927.18256.151225.1.3.15-1325","ultima_data":null},{"id":"C13","competencia":"2025-12","valor_original":35537.88,"perd_inicial":"05788.24955.130126.1.3.15-6514","ultima_data":null},{"id":"C14","competencia":"2026-01","valor_original":21166.16,"perd_inicial":"32488.53540.110226.1.3.15-2700","ultima_data":null},{"id":"C15","competencia":"2026-02","valor_original":9414.55,"perd_inicial":"41173.10498.180326.1.3.15-6502","ultima_data":null},{"id":"C16","competencia":"2026-03","valor_original":33903.69,"perd_inicial":"01694.07014.150426.1.3.15-2082","ultima_data":null},{"id":"C17","competencia":"2026-04","valor_original":51766.17,"perd_inicial":"33575.54118.180526.1.3.15-2439","ultima_data":null},{"id":"C18","competencia":"2026-05","valor_original":128150.84,"perd_inicial":"42779.15396.220626.1.3.15-1025","ultima_data":null},{"id":"C19","competencia":"2026-06","valor_original":13494.96,"perd_inicial":"37751.16896.160726.1.3.15-8300","ultima_data":"2026-07-16"}],"compensacoes":[{"data":"2023-12-01","competencia_debito":"2023-12","departamento":"FISCAL","descricao":"COFINS","debitos":[{"descricao":"COFINS","darf":"2172-01","valor":8616.99},{"descricao":"CSLL","darf":"2372-01","valor":12736.86},{"descricao":"IRPJ","darf":"2089-01","valor":14597.77},{"descricao":"PIS","darf":"8109-02","valor":1867.01}],"valor_total":37818.63,"dcomp_inicial":"07478.54752.171224.1.7.15-0291","dcomp_resultante":"13159.52477.171224.1.7.15-3225","saldo_apos":10723.46,"obs":null,"inis_internos":["07478.54752.171224.1.7.15-0291"]},{"data":"2025-04-16","competencia_debito":"2025-03","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":1055.73},{"descricao":"COFINS","darf":"2172-01","valor":4872.6},{"descricao":"IRPJ 1º quota 1º Trimestre","darf":"2089-01","valor":20606.19},{"descricao":"CSLL 1º quota 1º Trimestre","darf":"2372-01","valor":6668.2},{"descricao":"CSLL 1º quota 1º Trimestre","darf":"2372-01","valor":1346.41}],"valor_total":34549.13,"dcomp_inicial":"28412.63264.070425.1.3.15-6779","dcomp_resultante":"07898.68641.160425.1.7.15-8727","saldo_apos":0.0,"obs":null,"inis_internos":["28412.63264.070425.1.3.15-6779","07459.44083.081222.1.3.15-0615","33529.45651.160425.1.3.15-8830"]},{"data":"2025-05-09","competencia_debito":"2025-04","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":1658.48},{"descricao":"COFINS","darf":"2172-01","valor":7654.53}],"valor_total":9313.01,"dcomp_inicial":"33060.50388.090525.1.3.15-4155","dcomp_resultante":"33506.64130.140525.1.3.15-0698","saldo_apos":43195.38,"obs":null,"inis_internos":["33060.50388.090525.1.3.15-4155"]},{"data":"2025-05-14","competencia_debito":"2025-03","departamento":"FISCAL","descricao":"IRPJ 2º quota 1º Trimestre","debitos":[{"descricao":"IRPJ 2º quota 1º Trimestre","darf":"2089-01","valor":20812.25},{"descricao":"CSLL 2º quota 1º Trimestre","darf":"2372-01","valor":8219.6},{"descricao":"INSS","darf":"FOLHA","valor":11674.69},{"descricao":"IRRF FOLHA","darf":"0561-07","valor":442.73}],"valor_total":41149.27,"dcomp_inicial":"33506.64130.140525.1.3.15-0698","dcomp_resultante":"15537.93029.180625.1.7.15-2283","saldo_apos":2342.83,"obs":null,"inis_internos":["33506.64130.140525.1.3.15-0698","25828.76010.140525.1.3.15-2990","31290.84410.180625.1.7.15-5973"]},{"data":null,"competencia_debito":"2025-05","departamento":"FOLHA","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":3755.37},{"descricao":"INSS - RETENÇÃO","darf":"1162-01","valor":610.5}],"valor_total":4365.87,"dcomp_inicial":"15537.93029.180625.1.7.15-2283","dcomp_resultante":"03196.16076.180625.1.3.15-6460","saldo_apos":0.0,"obs":null,"inis_internos":["15537.93029.180625.1.7.15-2283","03196.16076.180625.1.3.15-6460"]},{"data":"2025-09-12","competencia_debito":"2025-08","departamento":"FOLHA","descricao":"IRRF FOLHA","debitos":[{"descricao":"IRRF FOLHA","darf":"0561-07","valor":915.36}],"valor_total":915.36,"dcomp_inicial":"41611.25637.120925.1.3.15-4540","dcomp_resultante":null,"saldo_apos":0.0,"obs":null,"inis_internos":["41611.25637.120925.1.3.15-4540"]},{"data":"2025-10-15","competencia_debito":"2025-09","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1649.68},{"descricao":"PIS E COFINS","darf":"8109/2172","valor":9754.99},{"descricao":"IR E CSLL","darf":"2089/2372","valor":143844.51}],"valor_total":155249.18,"dcomp_inicial":"39490.07400.151025.1.3.15-7880","dcomp_resultante":"06764.90033.161025.1.3.15-6913","saldo_apos":0.0,"obs":null,"inis_internos":["39490.07400.151025.1.3.15-7880","39490.07400.151025.1.3.15-7880","00709.90149.161025.1.3.15-1222"]},{"data":"2025-11-12","competencia_debito":"2025-10","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1531.56},{"descricao":"PIS E COFINS","darf":"8109/2172","valor":36547.07}],"valor_total":38078.63,"dcomp_inicial":"14074.48805.121125.1.3.15-3806","dcomp_resultante":"41703.63990.241125.1.3.15-3824","saldo_apos":0.0,"obs":null,"inis_internos":["14074.48805.121125.1.3.15-3806","14074.48805.121125.1.3.15-3806"]},{"data":"2025-12-15","competencia_debito":"2025-11","departamento":"FISCAL","descricao":"IRRF - FOLHA","debitos":[{"descricao":"IRRF - FOLHA","darf":"0561-07","valor":1044.86},{"descricao":"","darf":"8109","valor":7514.22},{"descricao":"","darf":"2172","valor":20938.11}],"valor_total":29497.19,"dcomp_inicial":"30927.18256.151225.1.3.15-1325","dcomp_resultante":"17639.70372.190126.1.7.15-0078","saldo_apos":0.0,"obs":null,"inis_internos":["30927.18256.151225.1.3.15-1325","38415.38814.191225.1.7.15-0525","00721.65114.191225.1.3.15-9642"]},{"data":"2025-12-15","competencia_debito":"13/2025","departamento":"FOLHA","descricao":"INSS - FOLHA","debitos":[{"descricao":"INSS - FOLHA","darf":"","valor":12929.23}],"valor_total":12929.23,"dcomp_inicial":"30927.18256.151225.1.3.15-1325","dcomp_resultante":"03687.56522.151225.1.3.15-7550","saldo_apos":28480.14,"obs":null,"inis_internos":["30927.18256.151225.1.3.15-1325"]},{"data":"2026-01-13","competencia_debito":"2025-12","departamento":"FISCAL","descricao":"Compensacao 2025-12","debitos":[{"descricao":"","darf":"0561-07","valor":1996.07},{"descricao":"","darf":"2172/8109/5952","valor":33541.81}],"valor_total":35537.88,"dcomp_inicial":"05788.24955.130126.1.3.15-6514","dcomp_resultante":"19231.10174.190126.1.3.15-7033","saldo_apos":0.0,"obs":null,"inis_internos":["05788.24955.130126.1.3.15-6514"]},{"data":"2026-02-11","competencia_debito":"2025-05","departamento":"FOLHA","descricao":"Correção per/dcomp errado de maio","debitos":[{"descricao":"Correção per/dcomp errado de maio","darf":"1138-01","valor":9226.5},{"descricao":"","darf":"1138-04","valor":1293.7},{"descricao":"","darf":"1646-01","valor":1383.98},{"descricao":"","darf":"1099-01","valor":711.54},{"descricao":"","darf":"1170-01","valor":1153.31},{"descricao":"","darf":"1200-01","valor":276.79},{"descricao":"","darf":"1225-01","valor":1153.31}],"valor_total":15199.13,"dcomp_inicial":"39829.07392.110226.1.3.15-3600","dcomp_resultante":null,"saldo_apos":0.0,"obs":null,"inis_internos":["39829.07392.110226.1.3.15-3600"]},{"data":"2026-02-11","competencia_debito":"2025-05","departamento":"FOLHA","descricao":"CP SEGURADOS - EMP","debitos":[{"descricao":"CP SEGURADOS - EMP","darf":"1082-01","valor":135.4},{"descricao":"CP TERCEIROS - INCRA","darf":"1176-01","valor":92.25}],"valor_total":227.65,"dcomp_inicial":"32488.53540.110226.1.3.15-2700","dcomp_resultante":null,"saldo_apos":20938.51,"obs":null,"inis_internos":["32488.53540.110226.1.3.15-2700"]},{"data":"2026-02-11","competencia_debito":"2025-06","departamento":"FOLHA","descricao":"CP PATRONAL - EMP","debitos":[{"descricao":"CP PATRONAL - EMP","darf":"1138-01","valor":4953.09},{"descricao":"CP PATRONAL - CONT","darf":"1138-04","valor":1280.9},{"descricao":"CP PATRONAL - GILRAT","darf":"1646-01","valor":1921.14},{"descricao":"CP TERCEIROS - SAL","darf":"1170-01","valor":1600.94},{"descricao":"CP TERCEIROS - INCRA","darf":"1176-01","valor":128.07},{"descricao":"CP TERCEIROS - SEBRAE","darf":"1200-01","valor":384.22},{"descricao":"CP TERCEIROS - SESCOOP","darf":"1225-01","valor":1600.94}],"valor_total":11869.3,"dcomp_inicial":"32488.53540.110226.1.3.15-2700","dcomp_resultante":"32431.47938.110226.1.3.15-4328","saldo_apos":9069.21,"obs":"RET - gerou nº 10343.38561.240226.1.7.15-1852","inis_internos":["32488.53540.110226.1.3.15-2700"]},{"data":"2026-02-11","competencia_debito":"2025-06","departamento":"FISCAL","descricao":"IRRF","debitos":[{"descricao":"IRRF","darf":"0561-07","valor":539.52}],"valor_total":539.52,"dcomp_inicial":"32431.47938.110226.1.3.15-4328","dcomp_resultante":"42085.57221.110226.1.3.15-8890","saldo_apos":8529.69,"obs":"RET - gerou nº 23604.37653.240226.1.7.15-1526","inis_internos":["32431.47938.110226.1.3.15-4328"]},{"data":"2026-02-24","competencia_debito":"2026-01","departamento":"FISCAL","descricao":"PIS","debitos":[{"descricao":"PIS","darf":"8109-02","valor":7540.97}],"valor_total":7540.97,"dcomp_inicial":"42085.57221.110226.1.3.15-8890","dcomp_resultante":"01986.30366.240226.1.3.15-0400","saldo_apos":988.72,"obs":null,"inis_internos":["42085.57221.110226.1.3.15-8890"]},{"data":"2026-03-18","competencia_debito":"2026-02","departamento":"FISCAL","descricao":"IRRF","debitos":[{"descricao":"IRRF","darf":"0561-07","valor":108.66}],"valor_total":108.66,"dcomp_inicial":null,"dcomp_resultante":"41173.10498.180326.1.3.15-6502","saldo_apos":9305.89,"obs":null,"inis_internos":[]},{"data":"2026-04-15","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"PIS/COFINS","debitos":[{"descricao":"PIS/COFINS","darf":"8109/2172","valor":9398.95}],"valor_total":9398.95,"dcomp_inicial":"41173.10498.180326.1.3.15-6502","dcomp_resultante":"33880.53422.150426.1.3.15-4824","saldo_apos":0.0,"obs":null,"inis_internos":["41173.10498.180326.1.3.15-6502"]},{"data":"2026-04-15","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"COFINS","debitos":[{"descricao":"COFINS","darf":"2172","valor":15072.67}],"valor_total":15072.67,"dcomp_inicial":null,"dcomp_resultante":"01694.07014.150426.1.3.15-2082","saldo_apos":24964.23,"obs":null,"inis_internos":[]},{"data":"2026-04-15","competencia_debito":"1º QUOTA 1º TRIM/26","departamento":"FISCAL","descricao":"CSLL","debitos":[{"descricao":"CSLL","darf":"2372","valor":1010.57}],"valor_total":1010.57,"dcomp_inicial":"01986.30366.240226.1.3.15-0400","dcomp_resultante":"30550.02806.150426.1.3.15-1729","saldo_apos":0.0,"obs":null,"inis_internos":["01986.30366.240226.1.3.15-0400"]},{"data":"2026-04-15","competencia_debito":"1º QUOTA 1º TRIM/26","departamento":"FISCAL","descricao":"CSLL","debitos":[{"descricao":"CSLL","darf":"2372","valor":24964.23}],"valor_total":24964.23,"dcomp_inicial":"01694.07014.150426.1.3.15-2082","dcomp_resultante":"30034.15214.150426.1.3.15-5218","saldo_apos":0.0,"obs":null,"inis_internos":["01694.07014.150426.1.3.15-2082"]},{"data":"2026-05-18","competencia_debito":"2026-04","departamento":"FISCAL","descricao":"PIS/COFINS","debitos":[{"descricao":"PIS/COFINS","darf":"8109/2172","valor":27012.65}],"valor_total":27012.65,"dcomp_inicial":null,"dcomp_resultante":"33575.54118.180526.1.3.15-2439","saldo_apos":24751.3,"obs":null,"inis_internos":[]},{"data":"2026-05-18","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"IRPJ","debitos":[{"descricao":"IRPJ","darf":"2089","valor":77077.26}],"valor_total":77077.26,"dcomp_inicial":"33575.54118.180526.1.3.15-2439","dcomp_resultante":"05837.87606.180526.1.3.15-7448","saldo_apos":2.48,"obs":"Perd-comp retificado nº 04928.00957.180526.1.7.15-0382","inis_internos":["33575.54118.180526.1.3.15-2439"]},{"data":"2026-06-22","competencia_debito":"2026-05","departamento":"FISCAL","descricao":"Pis e Cofins","debitos":[{"descricao":"Pis e Cofins","darf":"8109/2172","valor":20362.6}],"valor_total":20362.6,"dcomp_inicial":null,"dcomp_resultante":"42779.15396.220626.1.3.15-1025","saldo_apos":107788.24,"obs":null,"inis_internos":[]},{"data":"2026-06-22","competencia_debito":"2026-03","departamento":"FISCAL","descricao":"IR e CSLL 3º quota 1º trimestre","debitos":[{"descricao":"IR e CSLL 3º quota 1º trimestre","darf":"2089/2372","valor":105167.92}],"valor_total":105167.92,"dcomp_inicial":"42779.15396.220626.1.3.15-1025","dcomp_resultante":"24017.71489.220626.1.3.15-6391","saldo_apos":2620.32,"obs":null,"inis_internos":["42779.15396.220626.1.3.15-1025"]},{"id":"D26","data":"2026-07-16","competencia_debito":"2026-06","departamento":"FISCAL","descricao":"PIS jun/2026 (crédito Retenção 9.711/98)","debitos":[{"descricao":"PIS - Faturamento","darf":"8109-02","valor":10267.38}],"valor_total":10267.38,"dcomp_inicial":"37751.16896.160726.1.3.15-8300","dcomp_resultante":null,"saldo_apos":3227.58,"obs":"Crédito original 13.494,96 (jun/26) − débito 10.267,38 = saldo 3.227,58. Recibo SERPRO 16/07/2026.","inis_internos":["37751.16896.160726.1.3.15-8300"]}],"evidencias":["00709.90149.161025.1.3.15-1222","00721.65114.191225.1.3.15-9642","01235.18047.100325.1.3.15-9676","01694.07014.150426.1.3.15-2082","01928.62656.120625.1.3.15-7695","01986.30366.240226.1.3.15-0400","02536.88152.180325.1.3.15-0886","03196.16076.180625.1.3.15-6460","03687.56522.151225.1.3.15-7550","05788.24955.130126.1.3.15-6514","07459.44083.081222.1.3.15-0615","07478.54752.171224.1.7.15-0291","08575.42871.120625.1.3.15-7549","14074.48805.121125.1.3.15-3806","15537.93029.180625.1.7.15-2283","17375.54243.220825.1.3.15-4990","25828.76010.140525.1.3.15-2990","28412.63264.070425.1.3.15-6779","30927.18256.151225.1.3.15-1325","31024.01844.220925.1.3.15-4025","31290.84410.180625.1.7.15-5973","32431.47938.110226.1.3.15-4328","32488.53540.110226.1.3.15-2700","33060.50388.090525.1.3.15-4155","33506.64130.140525.1.3.15-0698","33529.45651.160425.1.3.15-8830","33575.54118.180526.1.3.15-2439","38415.38814.191225.1.7.15-0525","39490.07400.151025.1.3.15-7880","39829.07392.110226.1.3.15-3600","41173.10498.180326.1.3.15-6502","41611.25637.120925.1.3.15-4540","42085.57221.110226.1.3.15-8890","42779.15396.220626.1.3.15-1025"],"conferencia":{"total_gerado":619294.41,"total_debitos":714955.46,"disponivel_esperado":26841.22,"cadeias_vivas":3,"creditos_nao_usados":1}};
 
 /* ---------- Estado ---------- */
 var LS_KEY='mxperdcomp_v2'; // v2: base da aba COMPENSACOES completa + motor de cadeias (cache v1 tinha base incompleta)
@@ -513,13 +548,46 @@ function saldoCredito(cr){
    sinalizados na Conferência para o usuário confirmar no e-CAC, mas não entram
    no disponível — é o que evita o desencontro. ---------- */
 function ordIdx(){var m={};state.compensacoes.forEach(function(c,i){m[c.id]=i;});return m;}
-// data vazia ordena como MAIS ANTIGA (não pode virar a ponta da corrente)
+// data vazia ordena como MAIS ANTIGA (não pode virar ponta de corrente)
 function compsOrdenadas(){var m=ordIdx();return state.compensacoes.slice().sort(function(a,b){
   return (a.data||'0000-01-01').localeCompare(b.data||'0000-01-01')||(m[a.id]-m[b.id]);});}
 function temSaldo(c){var s=c.saldo_apos;return s!=null&&s!==''&&!isNaN(Number(s));}
-function pontaAtual(){var o=compsOrdenadas();for(var i=o.length-1;i>=0;i--){if(temSaldo(o[i]))return o[i];}return null;}
-function saldoDisponivel(){var p=pontaAtual();return p?Number(p.saldo_apos):0;}
-function proximoNumero(){var p=pontaAtual();if(!p)return null;return {num:p.dcomp_resultante||p.dcomp_inicial,saldo:Number(p.saldo_apos),de:p};}
+function ordKey(c,i){return (c.data||'0000-01-01')+'|'+('000000'+i).slice(-6);}
+/* v4: pode haver MAIS DE UM PER/DCOMP com saldo ao mesmo tempo (correntes paralelas —
+   ex.: a corrente antiga + um crédito novo declarado à parte). Uma ponta está VIVA se
+   tem "saldo após" > 0 e o nº dela não foi consumido por nenhuma outra transmissão
+   (nem consta como consumido no e-CAC/evidências). O DISPONÍVEL soma as pontas ATIVAS;
+   pontas paradas há 6+ meses vão para a Conferência (fora do total até confirmar). */
+function pontasVivas(){
+  var cs=state.compensacoes, evid=state.evidencias||[], out=[];
+  for(var i=0;i<cs.length;i++){
+    var c=cs[i]; var s=Number(c.saldo_apos);
+    if(!temSaldo(c)||s<=0.005) continue;
+    var res=c.dcomp_resultante||null, ini=c.dcomp_inicial||null;
+    var num=res||ini;
+    var sup=false;
+    for(var j=0;j<cs.length&&!sup;j++){
+      if(i===j) continue;
+      var d=cs[j];
+      if(res && (d.dcomp_inicial===res || (d.inis_internos||[]).indexOf(res)>=0)) sup=true;          // resultante consumido
+      else if(!res && ini && (d.dcomp_inicial===ini || (d.inis_internos||[]).indexOf(ini)>=0) && ordKey(d,j)>ordKey(c,i)) sup=true; // mesmo nº reusado depois
+      else if(res && ini && d.dcomp_inicial===ini && ordKey(d,j)>ordKey(c,i)) sup=true;              // mesmo inicial usado depois
+    }
+    if(!sup && res && evid.indexOf(res)>=0) sup=true;                                               // consumido conforme e-CAC
+    if(!sup) out.push(c);
+  }
+  out.sort(function(a,b){return Number(b.saldo_apos)-Number(a.saldo_apos);});
+  return out;
+}
+function ehParada(c){var mp=mesesParado(c.data);return mp!=null&&mp>=6;}
+function pontasAtivas(){return pontasVivas().filter(function(c){return !ehParada(c);});}
+function pontasParadas(){return pontasVivas().filter(ehParada);}
+function saldoDisponivel(){var t=0;pontasAtivas().forEach(function(c){t+=Number(c.saldo_apos);});return t;}
+function proximoNumero(){
+  var v=pontasAtivas();
+  if(!v.length) return null;
+  return {num:v[0].dcomp_resultante||v[0].dcomp_inicial,saldo:Number(v[0].saldo_apos),de:v[0],total:v.length};
+}
 function numerosConsumidos(){
   var s={};
   state.compensacoes.forEach(function(c){
@@ -528,25 +596,6 @@ function numerosConsumidos(){
   });
   (state.evidencias||[]).forEach(function(n){s[n]=1;});
   return s;
-}
-// saldos que aparecem em aberto mas NÃO são a ponta (a conferir; não somados)
-function saldosEmAberto(){
-  var ponta=pontaAtual(), cons=numerosConsumidos();
-  return state.compensacoes.filter(function(c){
-    if(ponta&&c.id===ponta.id) return false;
-    var s=Number(c.saldo_apos);
-    if(!(s>10)) return false;                       // ignora migalhas (centavos residuais)
-    if(c.dcomp_resultante){
-      if(cons[c.dcomp_resultante]) return false;    // resultante já consumido pelo elo seguinte / e-CAC
-    }else if(c.dcomp_inicial){
-      // sem resultante: o saldo rolou adiante se OUTRA transmissão reusou o mesmo nº inicial
-      var carregou=state.compensacoes.some(function(d){
-        return d.id!==c.id && (d.dcomp_inicial===c.dcomp_inicial || (d.inis_internos||[]).indexOf(c.dcomp_inicial)>=0);
-      });
-      if(carregou) return false;
-    }
-    return true;
-  }).sort(function(a,b){return Number(b.saldo_apos)-Number(a.saldo_apos);});
 }
 function numerosUsados(){
   var s={};
@@ -678,7 +727,7 @@ function go(tab){
 /* ---------- Render Painel ---------- */
 function renderPainel(){
   var ger=totalGerado(), usa=totalUsado(), disp=saldoDisponivel();
-  var ponta=pontaAtual(), abertos=saldosEmAberto(), livres=creditosNaoUsados();
+  var ativas=pontasAtivas(), paradas=pontasParadas(), livres=creditosNaoUsados();
   $('#heroSaldo').textContent=BRL(disp);
   $('#kGerado').textContent=BRLk(ger);
   $('#kUsado').textContent=BRLk(usa);
@@ -698,39 +747,67 @@ function renderPainel(){
     '<span><span class="sw" style="background:var(--folha)"></span>Folha <b>'+BRL(fol)+'</b></span>'+
     '<span><span class="sw" style="background:var(--ok)"></span>Disponível hoje <b>'+BRL(disp)+'</b></span>';
 
-  // proximo numero = ponta da corrente (a célula amarela)
+  // proximo numero = ponta ativa de maior saldo
   var pn=proximoNumero();
   $('#proxNumero').textContent=pn?pn.num:'—';
-  $('#proxInfo').textContent=pn?('Saldo '+BRL(pn.saldo)+' · '+esc(pn.de.descricao||'')+' · '+fmtData(pn.de.data)) :
+  $('#proxInfo').textContent=pn?('Saldo '+BRL(pn.saldo)+' · '+esc(pn.de.descricao||'')+' · '+fmtData(pn.de.data)+(pn.total>1?' · +'+(pn.total-1)+' outro(s) PER/DCOMP com saldo':'')) :
     (livres.length?'Nenhuma corrente aberta — declare o PER do próximo crédito.':'Nenhum número em aberto.');
 
-  // EXTRATO: as últimas transmissões da corrente, até chegar na ponta (disponível)
+  // SALDOS POR PER/DCOMP: cada ponta ativa soma; paradas e créditos a declarar ficam fora
+  var sr='';
+  ativas.forEach(function(c){
+    var num=c.dcomp_resultante||c.dcomp_inicial;
+    sr+='<tr style="background:var(--okbg)"><td class="num-code" style="color:var(--ok);font-weight:700">'+esc(num||'—')+'</td>'+
+      '<td>'+esc(c.descricao||'')+' <span class="sub">('+fmtComp(c.competencia_debito)+')</span></td>'+
+      '<td>'+fmtData(c.data)+'</td>'+
+      '<td class="num mono" style="color:var(--ok);font-weight:800">'+BRL(c.saldo_apos)+'</td>'+
+      '<td><span class="tag ok">soma</span> <button class="mini" onclick="openDet(\''+c.id+'\')">ver</button></td></tr>';
+  });
+  paradas.forEach(function(c){
+    var num=c.dcomp_resultante||c.dcomp_inicial;
+    sr+='<tr><td class="num-code">'+esc(num||'—')+'</td>'+
+      '<td>'+esc(c.descricao||'')+' <span class="sub">('+fmtComp(c.competencia_debito)+')</span></td>'+
+      '<td>'+fmtData(c.data)+' <span class="tag warn">parado '+mesesParado(c.data)+'m</span></td>'+
+      '<td class="num mono">'+BRL(c.saldo_apos)+'</td>'+
+      '<td><span class="tag warn">fora do total</span> <button class="mini" onclick="openDet(\''+c.id+'\')">ver</button></td></tr>';
+  });
+  livres.forEach(function(cr){
+    sr+='<tr><td class="num-code">'+esc(cr.perd_inicial||'aguardando PER')+'</td>'+
+      '<td>Crédito '+fmtComp(cr.competencia)+' <span class="tag zero">a declarar</span></td><td>—</td>'+
+      '<td class="num mono">'+BRL(valorCreditoLivre(cr))+'</td>'+
+      '<td><span class="tag zero">fora do total</span> <button class="mini" onclick="openCred(\''+cr.id+'\')">ver</button></td></tr>';
+  });
+  sr+='<tr><td colspan="3" style="text-align:right"><b>TOTAL DISPONÍVEL</b></td><td class="num mono" style="color:var(--ok);font-weight:800;font-size:15px">'+BRL(disp)+'</td><td></td></tr>';
+  $('#tblSaldos tbody').innerHTML=sr;
+
+  // EXTRATO: últimas transmissões; pontas ativas destacadas
+  var ativasIds={};ativas.forEach(function(c){ativasIds[c.id]=1;});
+  var paradasIds={};paradas.forEach(function(c){paradasIds[c.id]=1;});
   var ord=compsOrdenadas().filter(temSaldo);
   var ult=ord.slice(-8);
   var rows=ult.map(function(c){
-    var ehPonta=ponta&&c.id===ponta.id;
+    var viva=!!ativasIds[c.id], parada=!!paradasIds[c.id];
     var num=c.dcomp_resultante||c.dcomp_inicial;
-    var st=ehPonta?'<span class="tag ok">DISPONÍVEL</span>':'<span class="tag zero">consumido</span>';
-    return '<tr'+(ehPonta?' style="background:var(--okbg)"':'')+'>'+
+    var st=viva?'<span class="tag ok">DISPONÍVEL</span>':parada?'<span class="tag warn">a confirmar</span>':'<span class="tag zero">consumido</span>';
+    return '<tr'+(viva?' style="background:var(--okbg)"':'')+'>'+
       '<td>'+fmtData(c.data)+'</td>'+
       '<td>'+esc(c.descricao||'')+' <span class="sub">('+fmtComp(c.competencia_debito)+')</span></td>'+
       '<td class="num-code">'+esc(num||'—')+'</td>'+
-      '<td class="num mono"'+(ehPonta?' style="color:var(--ok);font-weight:800"':'')+'>'+BRL(c.saldo_apos)+'</td>'+
+      '<td class="num mono"'+(viva?' style="color:var(--ok);font-weight:800"':'')+'>'+BRL(c.saldo_apos)+'</td>'+
       '<td>'+st+'</td></tr>';
   }).join('');
   $('#tblVivas tbody').innerHTML=rows||'<tr><td colspan="5" class="empty">Nenhuma transmissão com saldo.</td></tr>';
 
   // CONFERÊNCIA / alertas
   var al=[];
-  abertos.forEach(function(c){
-    var mp=mesesParado(c.data);
-    al.push({t:'warn',h:ic('warn',15)+' Saldo de <b>'+BRL(c.saldo_apos)+'</b> em <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'sem nº')+', '+fmtData(c.data)+(mp!=null&&mp>=6?', parado '+mp+'m':'')+') aparece em aberto mas <b>não é a ponta atual</b> da corrente. Confirme no e-CAC: se já foi usado, edite a compensação e zere o "saldo após"; se é um crédito separado ainda válido, ele soma ao disponível.'});
+  paradas.forEach(function(c){
+    al.push({t:'warn',h:ic('warn',15)+' Saldo de <b>'+BRL(c.saldo_apos)+'</b> em <b>'+esc(c.descricao||'')+'</b> ('+esc(c.dcomp_resultante||c.dcomp_inicial||'sem nº')+') está parado desde '+fmtData(c.data)+' ('+mesesParado(c.data)+' meses) e <b>não soma</b> no disponível. Confirme no e-CAC: se ainda vale, lance a próxima compensação usando esse nº; se já foi usado, edite e zere o "saldo após".'});
   });
   livres.forEach(function(cr){
     al.push({t:'info',h:ic('info',15)+' Crédito de <b>'+fmtComp(cr.competencia)+'</b> (<b>'+BRL(valorCreditoLivre(cr))+'</b>) apurado e <b>ainda não declarado</b> em PER/DCOMP — não entra no disponível até ser usado numa compensação.'});
   });
-  if(!al.length) al.push({t:'ok',h:ic('check',15)+' Corrente conferida. Disponível hoje: <b>'+BRL(disp)+'</b>'+(pn?' na ponta '+esc(pn.num):'')+'.'});
-  else al.unshift({t:'ok',h:ic('check',15)+' <b>Disponível hoje: '+BRL(disp)+'</b> (saldo da ponta da corrente). Abaixo, itens a conferir que <b>não</b> estão somados nesse valor.'});
+  if(!al.length) al.push({t:'ok',h:ic('check',15)+' <b>Disponível: '+BRL(disp)+'</b> em '+ativas.length+' PER/DCOMP'+(ativas.length>1?'s':'')+' com saldo. Tudo conferido.'});
+  else al.unshift({t:'ok',h:ic('check',15)+' <b>Disponível hoje: '+BRL(disp)+'</b> em '+ativas.length+' PER/DCOMP'+(ativas.length>1?'s':'')+' com saldo (tabela abaixo). Itens sinalizados <b>não</b> estão somados.'});
   $('#alertas').innerHTML=al.map(function(a){return '<div class="callout '+a.t+'" style="margin-bottom:14px">'+a.h+'</div>';}).join('');
 
   // ultimas
@@ -931,11 +1008,10 @@ function collectDebs(){
 /* ---------- Abrir modal compensação ---------- */
 function openComp(id){
   fillCreditosSelect();
-  // datalist: a ponta atual (1º), depois saldos a conferir e créditos a declarar
+  // datalist: pontas ativas (somam), depois paradas a conferir e créditos a declarar
   var dl=$('#dlVivos');var opts='';
-  var ponta=pontaAtual();
-  if(ponta){var np=ponta.dcomp_resultante||ponta.dcomp_inicial;opts+='<option value="'+esc(np)+'" label="PONTA · '+BRL(ponta.saldo_apos)+' — '+esc(ponta.descricao||'')+'"></option>';}
-  saldosEmAberto().forEach(function(c){var n=c.dcomp_resultante||c.dcomp_inicial;if(n)opts+='<option value="'+esc(n)+'" label="a conferir · '+BRL(c.saldo_apos)+' — '+esc(c.descricao||'')+'"></option>';});
+  pontasAtivas().forEach(function(c){var n=c.dcomp_resultante||c.dcomp_inicial;if(n)opts+='<option value="'+esc(n)+'" label="'+BRL(c.saldo_apos)+' — '+esc(c.descricao||'')+'"></option>';});
+  pontasParadas().forEach(function(c){var n=c.dcomp_resultante||c.dcomp_inicial;if(n)opts+='<option value="'+esc(n)+'" label="a conferir · '+BRL(c.saldo_apos)+' — '+esc(c.descricao||'')+'"></option>';});
   creditosNaoUsados().forEach(function(cr){if(cr.perd_inicial)opts+='<option value="'+esc(cr.perd_inicial)+'" label="crédito '+fmtComp(cr.competencia)+' · '+BRL(valorCreditoLivre(cr))+'"></option>';});
   dl.innerHTML=opts;
   var c=id?state.compensacoes.filter(function(x){return x.id===id;})[0]:null;
@@ -1041,13 +1117,132 @@ function exportCsv(){
   download('mx-perdcomp-compensacoes.csv',csv,'text/csv;charset=utf-8');
 }
 
+/* ---------- IA: leitura de PDF do PER/DCOMP via DeepSeek ---------- */
+var DS_LSKEY='mxperdcomp_dskey';
+function dsGetKey(){return localStorage.getItem(DS_LSKEY)||'';}
+function loadPdfJs(cb){
+  if(window.pdfjsLib){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';cb();};
+  s.onerror=function(){iaStatus('Falha ao carregar o leitor de PDF (sem internet?)',true);};
+  document.head.appendChild(s);
+}
+function extractPdfText(file,cb){
+  var rd=new FileReader();
+  rd.onload=function(){
+    window.pdfjsLib.getDocument({data:rd.result}).promise.then(function(doc){
+      var textos=[],feitas=0,n=doc.numPages;
+      for(var i=1;i<=n;i++)(function(pi){
+        doc.getPage(pi).then(function(pg){return pg.getTextContent();}).then(function(tc){
+          textos[pi-1]=tc.items.map(function(it){return it.str;}).join(' ');
+          if(++feitas===n)cb(null,textos.join('\n\n'));
+        });
+      })(i);
+      if(n===0)cb(null,'');
+    }).catch(function(e){cb(e);});
+  };
+  rd.readAsArrayBuffer(file);
+}
+function iaStatus(msg,err){var el=$('#iaStatus');el.textContent=msg||'';el.style.color=err?'var(--dang)':'var(--mut)';}
+function dsParse(o){
+  // normaliza a resposta da IA (tolerante a variações de campo)
+  var lst=(o&&(o.perdcomps||o.documentos||o.itens))||[];
+  return lst.map(function(p){
+    function num(v){if(v==null||v==='')return null;var n=typeof v==='number'?v:parseNum(String(v));return isNaN(n)?null:n;}
+    return {numero:(p.numero||p.numero_perdcomp||p.codigo||'').toString().trim()||null,
+      tipo:(p.tipo_credito||p.tipo||'').toString().trim(),
+      competencia:(p.competencia_credito||p.competencia||'').toString().trim(),
+      credito:num(p.valor_credito_original!=null?p.valor_credito_original:p.credito),
+      utilizado:num(p.valor_utilizado!=null?p.valor_utilizado:p.utilizado),
+      saldo:num(p.saldo),
+      data:(p.data_transmissao||p.data||'').toString().trim(),
+      debitos:(p.debitos||[]).map(function(d){return {darf:(d.codigo||d.darf||'').toString(),descricao:(d.descricao||'').toString(),valor:num(d.valor)||0};})};
+  }).filter(function(p){return p.numero;});
+}
+var _iaUltimo=[];
+function iaAnalisar(){
+  var f=$('#iaFile').files[0];
+  if(!f){iaStatus('Escolha um arquivo PDF.',true);return;}
+  var key=dsGetKey();
+  if(!key){iaStatus('Configure a chave DeepSeek primeiro (botão de configurações no topo).',true);return;}
+  $('#iaResultado').innerHTML='';
+  iaStatus('Lendo o PDF…');
+  loadPdfJs(function(){
+    extractPdfText(f,function(err,texto){
+      if(err){iaStatus('Erro ao ler o PDF: '+err.message,true);return;}
+      texto=(texto||'').replace(/\s+/g,' ').trim();
+      if(texto.length<100){
+        iaStatus('Este PDF é digitalizado (imagem, sem texto) — a IA não consegue ler. Baixe a versão original do e-CAC ou anexe como comprovante.',true);
+        return;
+      }
+      iaStatus('Consultando a IA (DeepSeek)…');
+      var prompt='Extraia do texto de documento(s) PER/DCOMP da Receita Federal abaixo TODOS os PER/DCOMP mencionados. Responda SOMENTE este JSON: {"perdcomps":[{"numero":"00000.00000.000000.0.0.00-0000","tipo_documento":"","tipo_credito":"","competencia_credito":"MM/AAAA","valor_credito_original":0,"valor_utilizado":0,"saldo":0,"data_transmissao":"DD/MM/AAAA","debitos":[{"codigo":"","descricao":"","periodo":"MM/AAAA","valor":0}]}]}. Valores como número com ponto decimal. "saldo" = Saldo do Crédito Original (crédito menos utilizado) quando informado; se não houver, calcule crédito−utilizado; se impossível, null. Campo ausente = null. TEXTO: '+texto.slice(0,30000);
+      fetch('https://api.deepseek.com/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model:'deepseek-chat',temperature:0,response_format:{type:'json_object'},
+          messages:[{role:'system',content:'Você extrai dados de documentos fiscais brasileiros. Responda apenas JSON válido.'},{role:'user',content:prompt}]})
+      }).then(function(r){
+        if(!r.ok)throw new Error('API DeepSeek: HTTP '+r.status+(r.status===401?' (chave inválida?)':''));
+        return r.json();
+      }).then(function(j){
+        var content=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||'';
+        var obj;try{obj=JSON.parse(content);}catch(e){var m=content.match(/\{[\s\S]*\}/);obj=m?JSON.parse(m[0]):null;}
+        var itens=dsParse(obj);
+        if(!itens.length){iaStatus('A IA não encontrou nenhum PER/DCOMP no documento.',true);return;}
+        _iaUltimo=itens;iaStatus('');renderIaResultado(itens);
+      }).catch(function(e){iaStatus('Erro: '+e.message,true);});
+    });
+  });
+}
+function renderIaResultado(itens){
+  var usados=numerosConsumidos();
+  var todos={};state.compensacoes.forEach(function(c){if(c.dcomp_inicial)todos[c.dcomp_inicial]=1;if(c.dcomp_resultante)todos[c.dcomp_resultante]=1;(c.inis_internos||[]).forEach(function(n){todos[n]=1;});});
+  state.creditos.forEach(function(cr){if(cr.perd_inicial)todos[cr.perd_inicial]=1;});
+  var rows='',total=0,nSaldo=0;
+  itens.forEach(function(p,i){
+    var noSistema=todos[p.numero]?(usados[p.numero]?'<span class="tag zero">no sistema</span>':'<span class="tag ok">no sistema · ponta</span>'):'<span class="tag warn">NOVO</span>';
+    var temSaldoP=p.saldo!=null&&p.saldo>0.005;
+    if(temSaldoP){total+=p.saldo;nSaldo++;}
+    rows+='<tr'+(temSaldoP?' style="background:var(--okbg)"':'')+'>'+
+      '<td class="num-code">'+esc(p.numero)+'</td>'+
+      '<td>'+esc(p.tipo||'—')+' <span class="sub">'+esc(p.competencia||'')+'</span></td>'+
+      '<td class="num mono">'+(p.credito!=null?BRL(p.credito):'—')+'</td>'+
+      '<td class="num mono">'+(p.utilizado!=null?BRL(p.utilizado):'—')+'</td>'+
+      '<td class="num mono"'+(temSaldoP?' style="color:var(--ok);font-weight:800"':'')+'>'+(p.saldo!=null?BRL(p.saldo):'—')+'</td>'+
+      '<td>'+noSistema+(todos[p.numero]?'':' <button class="mini" onclick="iaPreLancar('+i+')">pré-lançar</button>')+'</td></tr>';
+  });
+  $('#iaResultado').innerHTML=
+    '<div class="callout '+(nSaldo?'ok':'info')+'" style="margin-bottom:10px">'+ic(nSaldo?'check':'info',15)+' '+
+      (nSaldo?('<b>'+nSaldo+' PER/DCOMP com saldo</b> · Total: <b>'+BRL(total)+'</b>'):'Nenhum PER/DCOMP com saldo neste documento.')+'</div>'+
+    '<div class="tablewrap"><table><thead><tr><th>Nº PER/DCOMP</th><th>Crédito</th><th class="num">Original</th><th class="num">Utilizado</th><th class="num">Saldo</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="sub" style="margin-top:8px">Confira sempre com o e-CAC. "Pré-lançar" abre o formulário de compensação já preenchido — nada é salvo sem você confirmar.</div>';
+}
+function iaPreLancar(i){
+  var p=_iaUltimo[i];if(!p)return;
+  hide('#ovIA');
+  openComp(null);
+  var dataIso=null;var m=(p.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);if(m)dataIso=m[3]+'-'+m[2]+'-'+m[1];
+  var compIso='';var mc=(p.competencia||'').match(/(\d{2})\/(\d{4})/);if(mc)compIso=mc[2]+'-'+mc[1];
+  $('#cData').value=dataIso||new Date().toISOString().slice(0,10);
+  $('#cComp').value=compIso;
+  $('#cDesc').value=(p.tipo||'PER/DCOMP')+(compIso?' '+fmtComp(compIso):'');
+  $('#cIni').value=p.numero;
+  $('#cSaldo').value=p.saldo!=null?String(p.saldo).replace('.',','):'';
+  var dl2=$('#debList');dl2.innerHTML='';
+  ((p.debitos&&p.debitos.length)?p.debitos:[{}]).forEach(function(d){dl2.appendChild(debRow({descricao:d.descricao||'',darf:d.darf||'',valor:d.valor!=null?d.valor:''}));});
+  recalcDeb();
+  toast('Formulário pré-preenchido pela IA — revise e salve');
+}
+
 /* ---------- Config ---------- */
 function setModeUI(){
   $('#modeDot').className='dot'+(online?' on':'');
   $('#modeTxt').textContent=online?'Compartilhado':'Local';
   $('#empresaNome').textContent=cfg.empresa||state.empresa||'—';
 }
-function openCfg(){$('#sbUrl').value=cfg.url;$('#sbKey').value=cfg.key;$('#sbEmpresa').value=cfg.empresa||'DF CAMPOS';show('#ovCfg');}
+function openCfg(){$('#sbUrl').value=cfg.url;$('#sbKey').value=cfg.key;$('#sbEmpresa').value=cfg.empresa||'DF CAMPOS';$('#dsKey').value=dsGetKey();show('#ovCfg');}
 function saveCfgAndConnect(){
   cfg.url=$('#sbUrl').value.trim();cfg.key=$('#sbKey').value.trim();cfg.empresa=$('#sbEmpresa').value.trim()||'DF CAMPOS';
   if(!cfg.url||!cfg.key){toast('Preencha URL e chave',true);return;}
@@ -1089,6 +1284,16 @@ function bind(){
   $('#fCred').addEventListener('input',renderCreditos);
   $('#btnSaveCfg').onclick=saveCfgAndConnect;
   $('#btnLocalMode').onclick=useLocalMode;
+  $('#btnLerPdf').onclick=function(){
+    $('#iaFile').value='';$('#iaResultado').innerHTML='';iaStatus(dsGetKey()?'':'Configure a chave DeepSeek primeiro (⚙ configurações).',!dsGetKey());
+    show('#ovIA');
+  };
+  $('#btnIaLer').onclick=iaAnalisar;
+  $('#btnSaveDs').onclick=function(){
+    var k=$('#dsKey').value.trim();
+    if(k){localStorage.setItem(DS_LSKEY,k);toast('Chave DeepSeek salva neste navegador');}
+    else{localStorage.removeItem(DS_LSKEY);toast('Chave removida');}
+  };
   $('#btnExportJson').onclick=exportJson;
   $('#btnExportCsv').onclick=exportCsv;
   $('#btnPrint').onclick=function(){window.print();};
@@ -1119,35 +1324,33 @@ function maybeTest(){
   // reseed limpo para números determinísticos
   seedState();
   ok('19 créditos importados',state.creditos.length===19);
-  ok('25 compensações importadas',state.compensacoes.length===25);
+  ok('26 compensações importadas (incl. DCOMP 16/07)',state.compensacoes.length===26);
   ok('evidências carregadas',(state.evidencias||[]).length>=30);
   ok('total gerado = 619294.41',Math.abs(totalGerado()-619294.41)<0.5);
-  ok('débitos lançados = 714955.46',Math.abs(totalUsado()-714955.46)<1);
   ok('fiscal + folha = total débitos',Math.abs(usadoDep('FISCAL')+usadoDep('FOLHA')-totalUsado())<0.5);
-  // ===== motor da corrente (v3): disponível = saldo da ponta =====
-  var ponta=pontaAtual();
-  ok('ponta = IR e CSLL 3ª quota (22/06)',!!ponta&&Math.abs(Number(ponta.saldo_apos)-2620.32)<0.01);
-  ok('DISPONÍVEL = 2.620,32 (célula amarela)',Math.abs(saldoDisponivel()-2620.32)<0.01);
+  // ===== motor v4: vários PER/DCOMP com saldo ao mesmo tempo =====
+  var ativas=pontasAtivas(), paradas=pontasParadas();
+  ok('3 PER/DCOMPs ativos com saldo',ativas.length===3);
+  ok('DISPONÍVEL = 5.850,38 (2.620,32 + 3.227,58 + 2,48)',Math.abs(saldoDisponivel()-5850.38)<0.02);
   var pn=proximoNumero();
-  ok('próximo nº = 24017.71489...6391',!!pn&&pn.num==='24017.71489.220626.1.3.15-6391');
-  // saldos intermediários NÃO entram no disponível
-  ok('107.788,24 (elo anterior) não é a ponta',saldoDisponivel()<107788);
-  // nova transmissão vira a nova ponta e substitui o disponível
+  ok('maior saldo = 37751...8300 (3.227,58)',!!pn&&pn.num==='37751.16896.160726.1.3.15-8300'&&Math.abs(pn.saldo-3227.58)<0.01);
+  ok('24017...6391 (2.620,32) segue ativo',ativas.some(function(c){return (c.dcomp_resultante||c.dcomp_inicial)==='24017.71489.220626.1.3.15-6391';}));
+  // parada há 6+ meses (dez/2023) fica FORA do total
+  ok('dez/2023 (10.723,46) parada, fora do total',paradas.length===1&&Math.abs(Number(paradas[0].saldo_apos)-10723.46)<0.01);
+  ok('saldos intermediários (107.788,24) não contam',saldoDisponivel()<10000);
+  // consumir uma ponta substitui só a corrente dela
   var antes=saldoDisponivel();
-  state.compensacoes.push({id:'tst1',data:'2026-07-01',departamento:'FISCAL',debitos:[{valor:1500}],valor_total:1500,
+  state.compensacoes.push({id:'tst1',data:'2026-07-17',departamento:'FISCAL',debitos:[{valor:1500}],valor_total:1500,
     dcomp_inicial:'24017.71489.220626.1.3.15-6391',dcomp_resultante:'99999.11111.010726.1.3.15-0001',inis_internos:['24017.71489.220626.1.3.15-6391'],saldo_apos:1120.32});
-  ok('nova transmissão vira a ponta (disp=1120.32)',Math.abs(saldoDisponivel()-1120.32)<0.01);
-  ok('antiga ponta (2620.32) sai do disponível',Math.abs(antes-2620.32)<0.01);
+  ok('consumo troca a ponta daquela corrente',Math.abs(saldoDisponivel()-(antes-2620.32+1120.32))<0.02);
   state.compensacoes.pop();
-  // saldos em aberto antigos NÃO somam ao disponível (10.723,46 dez/2023)
-  var abertos=saldosEmAberto();
-  ok('há saldo(s) em aberto a conferir',abertos.length>=1);
-  var somaAbertos=abertos.reduce(function(s,c){return s+Number(c.saldo_apos);},0);
-  ok('saldos em aberto NÃO estão no disponível',saldoDisponivel()===2620.32 && somaAbertos>0);
-  // 28.480,14 (13º) foi consumido por evidência e-CAC -> não aparece em aberto
-  ok('28.480,14 consumido por evidência, fora dos abertos',abertos.filter(function(c){return Math.abs(Number(c.saldo_apos)-28480.14)<0.01;}).length===0);
+  // 28.480,14 (13º) consumido por evidência e-CAC
+  ok('28.480,14 morto por evidência e-CAC',pontasVivas().filter(function(c){return Math.abs(Number(c.saldo_apos)-28480.14)<0.01;}).length===0);
   var livres=creditosNaoUsados();
-  ok('crédito jun/26 fica como "a declarar" (fora do disponível)',livres.filter(function(c){return c.competencia==='2026-06';}).length===1);
+  ok('crédito jun/26 declarado — não está mais "a declarar"',livres.filter(function(c){return c.competencia==='2026-06';}).length===0);
+  // parser da resposta da IA
+  var iaT=dsParse({perdcomps:[{numero:'37751.16896.160726.1.3.15-8300',tipo_credito:'Retenção 9.711/98',valor_credito_original:13494.96,valor_utilizado:'10.267,38',saldo:3227.58,debitos:[{codigo:'8109-02',valor:10267.38}]},{sem_numero:true}]});
+  ok('dsParse normaliza e filtra',iaT.length===1&&iaT[0].utilizado===10267.38&&iaT[0].debitos[0].darf==='8109-02');
   ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
   ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
   ok('fmtComp 2026-05',fmtComp('2026-05')==='mai/2026');
@@ -1161,7 +1364,7 @@ function maybeTest(){
 }
 
 window.go=go;window.openComp=openComp;window.openCred=openCred;window.delCred=delCred;window.delComp=delComp;window.openDet=openDet;
-window.anexoOpen=anexoOpen;window.anexoRemove=anexoRemove;
+window.anexoOpen=anexoOpen;window.anexoRemove=anexoRemove;window.iaPreLancar=iaPreLancar;
 init();
 </script>
 </body>

@@ -133,8 +133,8 @@
    "id": "C19",
    "competencia": "2026-06",
    "valor_original": 13494.96,
-   "perd_inicial": null,
-   "ultima_data": null
+   "perd_inicial": "37751.16896.160726.1.3.15-8300",
+   "ultima_data": "2026-07-16"
   }
  ],
  "compensacoes": [
@@ -818,6 +818,28 @@
    "obs": null,
    "inis_internos": [
     "42779.15396.220626.1.3.15-1025"
+   ]
+  },
+  {
+   "id": "D26",
+   "data": "2026-07-16",
+   "competencia_debito": "2026-06",
+   "departamento": "FISCAL",
+   "descricao": "PIS jun/2026 (crédito Retenção 9.711/98)",
+   "debitos": [
+    {
+     "descricao": "PIS - Faturamento",
+     "darf": "8109-02",
+     "valor": 10267.38
+    }
+   ],
+   "valor_total": 10267.38,
+   "dcomp_inicial": "37751.16896.160726.1.3.15-8300",
+   "dcomp_resultante": null,
+   "saldo_apos": 3227.58,
+   "obs": "Crédito original 13.494,96 (jun/26) − débito 10.267,38 = saldo 3.227,58. Recibo SERPRO 16/07/2026.",
+   "inis_internos": [
+    "37751.16896.160726.1.3.15-8300"
    ]
   }
  ],
