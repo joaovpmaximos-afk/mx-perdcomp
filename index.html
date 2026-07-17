@@ -403,7 +403,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 
 <!-- ============ MODAL: COMPENSAÇÃO ============ -->
 <div class="overlay" id="ovComp">
-  <div class="modal wide"><header><h2 id="compTitle">Nova compensação</h2><button class="mini" id="btnIaFillComp" style="margin-left:12px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> Preencher com PDF (IA)</button><button class="x" data-close>×</button></header>
+  <div class="modal wide"><header><h2 id="compTitle">Nova compensação</h2><button class="mini" id="btnIaFillComp" style="margin-left:12px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> Lançar do PDF (IA)</button><button class="x" data-close>×</button></header>
     <div class="body">
       <div class="formgrid">
         <div class="field"><label for="cData">Data da transmissão</label><input type="date" id="cData"></div>
@@ -447,7 +447,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 
 <!-- ============ MODAL: CRÉDITO ============ -->
 <div class="overlay" id="ovCred">
-  <div class="modal"><header><h2 id="credTitle">Novo crédito</h2><button class="mini" id="btnIaFillCred" style="margin-left:12px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> Preencher com PDF (IA)</button><button class="x" data-close>×</button></header>
+  <div class="modal"><header><h2 id="credTitle">Novo crédito</h2><button class="mini" id="btnIaFillCred" style="margin-left:12px"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.2 11.1-8.4 8.4a5.4 5.4 0 0 1-7.6-7.6l8.4-8.4a3.6 3.6 0 0 1 5.1 5.1l-8.4 8.4a1.8 1.8 0 0 1-2.5-2.5l7.7-7.7"/></svg> Lançar do PDF (IA)</button><button class="x" data-close>×</button></header>
     <div class="body">
       <div class="formgrid">
         <div class="field"><label>Competência</label><input id="rComp" placeholder="AAAA-MM ex.: 2026-05"></div>
@@ -1331,10 +1331,39 @@ function iaAplicarCred(p){
   if(p.saldo!=null)$('#rSaldoManual').value=String(p.saldo).replace('.',',');
   $('#rObs').value='Preenchido pela IA (PDF)'+(p.tipo?' — '+p.tipo:'');
 }
+/* vincula o crédito "a declarar" da competência do documento (se existir) */
+function iaVincularCredito(p){
+  var compIso='';var mc=(p.competencia||'').match(/(\d{2})\/(\d{4})/);if(mc)compIso=mc[2]+'-'+mc[1];
+  if(!compIso||!p.numero)return null;
+  var cred=null;state.creditos.forEach(function(cr){if(!cred&&cr.competencia===compIso&&!cr.perd_inicial)cred=cr;});
+  if(cred){cred.perd_inicial=p.numero;upsertCredRemote(cred);}
+  return cred;
+}
+/* motor automático: aplica os dados do PDF no formulário aberto e SALVA sozinho.
+   Só deixa o formulário aberto se faltar algo essencial no documento. */
+function iaAutoLancar(ctx,p){
+  if(ctx==='comp'){
+    iaAplicarComp(p);
+    var cred=iaVincularCredito(p);
+    if(cred){$('#cCredito').value=cred.id;}
+    if(!$('#cUser').value)$('#cUser').value='IA (PDF)';
+    saveComp();
+    var fechou=!$('#ovComp').classList.contains('show');
+    if(fechou){saveLocal();toast('Lançado pela IA — saldo do painel já atualizado');}
+    else toast('IA preencheu, mas faltou algo no documento — complete e salve',true);
+    return fechou;
+  }
+  iaAplicarCred(p);
+  saveCred();
+  var fechou2=!$('#ovCred').classList.contains('show');
+  if(fechou2)toast('Crédito lançado pela IA');
+  else toast('IA preencheu, mas faltou algo no documento — complete e salve',true);
+  return fechou2;
+}
 function iaFillRun(file){
   var btn=_iaFillCtx==='comp'?$('#btnIaFillComp'):$('#btnIaFillCred');
   var txt=btn?btn.innerHTML:null;
-  if(btn){btn.disabled=true;btn.textContent='Lendo PDF…';}
+  if(btn){btn.disabled=true;btn.textContent='Lendo e lançando…';}
   toast('IA lendo o PDF…');
   iaExtrair(file,function(err,itens){
     if(btn){btn.disabled=false;btn.innerHTML=txt;}
@@ -1342,8 +1371,7 @@ function iaFillRun(file){
     if(!itens.length){toast('A IA não encontrou PER/DCOMP no documento',true);return;}
     var p=itens[0];
     itens.some(function(x){if(x.saldo!=null&&x.saldo>0.005){p=x;return true;}return false;});
-    if(_iaFillCtx==='comp')iaAplicarComp(p);else iaAplicarCred(p);
-    toast('Preenchido pela IA'+(itens.length>1?' (usei o PER/DCOMP com saldo entre '+itens.length+')':'')+' — revise e salve');
+    iaAutoLancar(_iaFillCtx,p);
   });
 }
 function iaSituacao(p){
@@ -1557,7 +1585,14 @@ function maybeTest(){
   _iaUltimo=[{numero:'88888.77777.170726.1.3.15-0001',tipo:'Teste IA',competencia:'06/2026',saldo:550,data:'17/07/2026',debitos:[]}];
   iaLancarTudo();
   ok('saldo divergente é atualizado (600→550)',Math.abs(Number(state.compensacoes[antes2].saldo_apos)-550)<0.01);
-  state.compensacoes.pop();_iaUltimo=[];online=_on;
+  state.compensacoes.pop();
+  // auto-lançamento ao ler PDF dentro do formulário
+  openComp(null);
+  var n0=state.compensacoes.length;
+  var okAuto=iaAutoLancar('comp',{numero:'77777.66666.170726.1.3.15-0002',tipo:'Teste Auto',competencia:'06/2026',saldo:800,data:'17/07/2026',debitos:[{darf:'8109-02',descricao:'PIS',valor:200}]});
+  ok('IA lança sozinha ao ler o PDF no formulário',okAuto===true&&state.compensacoes.length===n0+1);
+  state.compensacoes.pop();
+  _iaUltimo=[];online=_on;
   ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
   ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
   ok('fmtComp 2026-05',fmtComp('2026-05')==='mai/2026');
