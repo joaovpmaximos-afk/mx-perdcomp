@@ -515,7 +515,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
 <div class="overlay" id="ovIA">
   <div class="modal wide"><header><h2>Ler PDF do PER/DCOMP (IA)</h2><button class="x" data-close>×</button></header>
     <div class="body">
-      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b>. A IA localiza <b>cada PER/DCOMP</b>, traz <b>o código e o saldo</b> de cada um com o total, e <b>lança sozinha no sistema</b>: o que for novo é criado, saldo divergente é atualizado, e o que já confere fica como está. Tudo entra marcado como "IA (PDF)" e pode ser editado. O lançamento manual continua no botão <b>+ Compensação</b> (que também tem "Preencher com PDF"). A IA usa a <b>chave da equipe no servidor</b> — ninguém precisa configurar nada. <b>O PDF precisa ter texto</b> (baixado do e-CAC); documento escaneado/foto não é lido — anexe-o como comprovante.</div></div>
+      <div class="callout info" style="margin-bottom:14px">ℹ️ <div>Envie o <b>PDF do e-CAC / PER/DCOMP WEB</b>. A IA localiza <b>cada PER/DCOMP</b>, traz <b>o código e o saldo</b> de cada um com o total, e <b>lança sozinha no sistema</b>: o que for novo é criado, saldo divergente é atualizado, e o que já confere fica como está. Tudo entra marcado como "IA (PDF)" e pode ser editado. O lançamento manual continua no botão <b>+ Compensação</b> (que também tem "Preencher com PDF"). A IA usa a <b>chave da equipe no servidor</b> — ninguém precisa configurar nada. PDF <b>escaneado também funciona</b>: o app aplica OCR no próprio navegador (leva ~1 min) — nesse caso, confira os valores lançados.</div></div>
       <div class="formgrid">
         <div class="field full"><label for="iaFile">Arquivo PDF</label><input type="file" id="iaFile" accept="application/pdf"></div>
       </div>
@@ -1235,6 +1235,7 @@ function dsParse(o){
   return lst.map(function(p){
     function num(v){if(v==null||v==='')return null;var n=typeof v==='number'?v:parseNum(String(v));return isNaN(n)?null:n;}
     return {numero:(p.numero||p.numero_perdcomp||p.codigo||'').toString().trim()||null,
+      iniDoc:(p.numero_perdcomp_inicial||p.perdcomp_inicial||'').toString().trim()||null,
       tipo:(p.tipo_credito||p.tipo||'').toString().trim(),
       competencia:(p.competencia_credito||p.competencia||'').toString().trim(),
       credito:num(p.valor_credito_original!=null?p.valor_credito_original:p.credito),
@@ -1274,24 +1275,58 @@ function iaBackend(prompt,cb){
   }else local();
 }
 function iaPrompt(texto){
-  return 'Extraia do texto de documento(s) PER/DCOMP da Receita Federal abaixo TODOS os PER/DCOMP mencionados. Responda SOMENTE este JSON: {"perdcomps":[{"numero":"00000.00000.000000.0.0.00-0000","tipo_documento":"","tipo_credito":"","competencia_credito":"MM/AAAA","valor_credito_original":0,"valor_utilizado":0,"saldo":0,"data_transmissao":"DD/MM/AAAA","debitos":[{"codigo":"","descricao":"","periodo":"MM/AAAA","valor":0}]}]}. Valores como número com ponto decimal. "saldo" = Saldo do Crédito Original (crédito menos utilizado) quando informado; se não houver, calcule crédito−utilizado; se impossível, null. Campo ausente = null. TEXTO: '+texto.slice(0,30000);
+  return 'Extraia do texto de documento(s) PER/DCOMP da Receita Federal abaixo TODOS os PER/DCOMP mencionados. Responda SOMENTE este JSON: {"perdcomps":[{"numero":"00000.00000.000000.0.0.00-0000","numero_perdcomp_inicial":"numero em Informado em Outro PER/DCOMP / N do PER/DCOMP Inicial, ou null","tipo_documento":"","tipo_credito":"","competencia_credito":"MM/AAAA","valor_credito_original":0,"valor_utilizado":0,"saldo":0,"data_transmissao":"DD/MM/AAAA","debitos":[{"codigo":"","descricao":"","periodo":"MM/AAAA","valor":0}]}]}. Valores como número com ponto decimal. "saldo" = Saldo do Crédito Original (crédito menos utilizado) quando informado; se não houver, calcule crédito−utilizado; se impossível, null. Campo ausente = null. TEXTO: '+texto.slice(0,30000);
 }
-// pipeline completo: PDF -> texto -> IA -> itens normalizados. cb(err, itens)
-function iaExtrair(file,cb){
+/* OCR no SERVIDOR (VPS): PyMuPDF + Tesseract via /api/ocr — rápido (~1s/página),
+   funciona com qualquer PDF (inclusive os que travam o render no navegador) e
+   não baixa nada na máquina do usuário. */
+var OCR_URL=(location.hostname==='perdcomp.maximosapp.com.br'||location.hostname==='perdcomp.76-13-235-201.sslip.io')?'/api/ocr':'https://perdcomp.maximosapp.com.br/api/ocr';
+function pdfOcr(file,onProgress,cb){
+  onProgress('Documento sem texto — OCR no servidor (alguns segundos)…');
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var tm=setTimeout(function(){if(ctl)ctl.abort();},180000);
+  fetch(OCR_URL,{method:'POST',body:file,headers:{'Content-Type':'application/pdf'},signal:ctl?ctl.signal:undefined})
+    .then(function(r){
+      if(!r.ok)throw new Error('OCR do servidor: HTTP '+r.status);
+      return r.json();
+    }).then(function(j){
+      clearTimeout(tm);
+      if(j.error)throw new Error('OCR do servidor: '+j.error);
+      cb(null,j.text||'');
+    }).catch(function(e){
+      clearTimeout(tm);
+      cb(new Error(e.name==='AbortError'?'OCR do servidor demorou demais (180s)':e.message));
+    });
+}
+// pipeline completo: PDF -> texto (nativo ou OCR) -> IA -> itens normalizados. cb(err, itens)
+function iaExtrair(file,cb,onProgress){
+  onProgress=onProgress||function(){};
+  function seguir(texto,viaOcr){
+    iaBackend(iaPrompt(texto),function(err2,content){
+      if(err2){cb(err2);return;}
+      var obj;try{obj=JSON.parse(content);}catch(e){var m=content.match(/\{[\s\S]*\}/);obj=m?JSON.parse(m[0]):null;}
+      var itens=dsParse(obj);
+      itens.forEach(function(it){it.viaOcr=!!viaOcr;});
+      cb(null,itens);
+    });
+  }
   loadPdfJs(function(){
     extractPdfText(file,function(err,texto){
       if(err){cb(err);return;}
       texto=(texto||'').replace(/\s+/g,' ').trim();
-      if(texto.length<100){cb(new Error('PDF_SEM_TEXTO'));return;}
-      iaBackend(iaPrompt(texto),function(err2,content){
-        if(err2){cb(err2);return;}
-        var obj;try{obj=JSON.parse(content);}catch(e){var m=content.match(/\{[\s\S]*\}/);obj=m?JSON.parse(m[0]):null;}
-        cb(null,dsParse(obj));
+      if(texto.length>=100){seguir(texto,false);return;}
+      // PDF escaneado: OCR no navegador
+      pdfOcr(file,onProgress,function(err3,textoOcr){
+        if(err3){cb(err3);return;}
+        textoOcr=(textoOcr||'').replace(/\s+/g,' ').trim();
+        if(textoOcr.length<100){cb(new Error('PDF_SEM_TEXTO'));return;}
+        onProgress('OCR concluído — consultando a IA…');
+        seguir(textoOcr,true);
       });
     });
   });
 }
-function iaMsgErro(e){return e&&e.message==='PDF_SEM_TEXTO'?'Este PDF é digitalizado (imagem, sem texto) — a IA não consegue ler. Baixe a versão original do e-CAC ou anexe como comprovante.':'Erro: '+((e&&e.message)||e);}
+function iaMsgErro(e){return e&&e.message==='PDF_SEM_TEXTO'?'Não consegui extrair texto deste PDF nem com OCR (imagem ilegível/qualidade baixa). Tente um scan mais nítido ou o PDF original do e-CAC.':'Erro: '+((e&&e.message)||e);}
 function iaAnalisar(){
   var f=$('#iaFile').files[0];
   if(!f){iaStatus('Escolha um arquivo PDF.',true);return;}
@@ -1303,8 +1338,8 @@ function iaAnalisar(){
     fim();
     if(err){iaStatus(iaMsgErro(err),true);return;}
     if(!itens.length){iaStatus('A IA não encontrou nenhum PER/DCOMP no documento.',true);return;}
-    _iaUltimo=itens;iaStatus('');renderIaResultado(itens);
-  });
+    _iaUltimo=itens;iaStatus(itens[0].viaOcr?'Lido por OCR (documento escaneado) — confira os valores com atenção.':'');renderIaResultado(itens);
+  },function(msg){iaStatus(msg);});
 }
 /* Preencher formulários abertos com PDF (compensação e crédito) */
 var _iaFillCtx=null;
@@ -1315,7 +1350,9 @@ function iaAplicarComp(p){
   $('#cData').value=dataIso||new Date().toISOString().slice(0,10);
   $('#cComp').value=compIso;
   $('#cDesc').value=(p.tipo||'PER/DCOMP')+(compIso?' '+fmtComp(compIso):'');
-  $('#cIni').value=p.numero||'';
+  var temElo=p.iniDoc&&p.iniDoc!==p.numero&&/^\d{5}\./.test(p.iniDoc);
+  $('#cIni').value=temElo?p.iniDoc:(p.numero||'');
+  $('#cRes').value=temElo?(p.numero||''):'';
   $('#cSaldo').value=p.saldo!=null?String(p.saldo).replace('.',','):'';
   var dl2=$('#debList');dl2.innerHTML='';
   ((p.debitos&&p.debitos.length)?p.debitos:[{}]).forEach(function(d){dl2.appendChild(debRow({descricao:d.descricao||'',darf:d.darf||'',valor:d.valor!=null?d.valor:''}));});
@@ -1371,8 +1408,9 @@ function iaFillRun(file){
     if(!itens.length){toast('A IA não encontrou PER/DCOMP no documento',true);return;}
     var p=itens[0];
     itens.some(function(x){if(x.saldo!=null&&x.saldo>0.005){p=x;return true;}return false;});
+    if(p.viaOcr)toast('Documento escaneado lido por OCR — confira os valores no lançamento');
     iaAutoLancar(_iaFillCtx,p);
-  });
+  },function(msg){if(btn)btn.textContent=msg.length>28?msg.slice(0,28)+'…':msg;});
 }
 function iaSituacao(p){
   // compara o PER/DCOMP do documento com o que está no sistema
@@ -1437,7 +1475,9 @@ function iaLancarTudo(){
     var obj={id:uid('d'),data:dataIso||hoje,competencia_debito:compIso||p.competencia||'',
       departamento:inferirDepIA(debs),descricao:(p.tipo||'PER/DCOMP')+(compIso?' '+fmtComp(compIso):''),
       debitos:debs,valor_total:debs.reduce(function(s,d){return s+d.valor;},0),
-      dcomp_inicial:p.numero,dcomp_resultante:null,inis_internos:[p.numero],
+      dcomp_inicial:(p.iniDoc&&p.iniDoc!==p.numero)?p.iniDoc:p.numero,
+      dcomp_resultante:(p.iniDoc&&p.iniDoc!==p.numero)?p.numero:null,
+      inis_internos:[(p.iniDoc&&p.iniDoc!==p.numero)?p.iniDoc:p.numero],
       saldo_apos:p.saldo!=null?p.saldo:null,credito_id:credito?credito.id:null,
       usuario:'IA (PDF)',obs:'Lançado automaticamente pela leitura do PDF'+(p.credito!=null?' — crédito original '+BRL(p.credito)+(p.utilizado!=null?' − utilizado '+BRL(p.utilizado):''):''),
       anexos:[],criado_em:hoje};
@@ -1572,8 +1612,8 @@ function maybeTest(){
   var livres=creditosNaoUsados();
   ok('crédito jun/26 declarado — não está mais "a declarar"',livres.filter(function(c){return c.competencia==='2026-06';}).length===0);
   // parser da resposta da IA
-  var iaT=dsParse({perdcomps:[{numero:'37751.16896.160726.1.3.15-8300',tipo_credito:'Retenção 9.711/98',valor_credito_original:13494.96,valor_utilizado:'10.267,38',saldo:3227.58,debitos:[{codigo:'8109-02',valor:10267.38}]},{sem_numero:true}]});
-  ok('dsParse normaliza e filtra',iaT.length===1&&iaT[0].utilizado===10267.38&&iaT[0].debitos[0].darf==='8109-02');
+  var iaT=dsParse({perdcomps:[{numero:'37751.16896.160726.1.3.15-8300',numero_perdcomp_inicial:'11111.00000.000000.1.3.15-0000',tipo_credito:'Retenção 9.711/98',valor_credito_original:13494.96,valor_utilizado:'10.267,38',saldo:3227.58,debitos:[{codigo:'8109-02',valor:10267.38}]},{sem_numero:true}]});
+  ok('dsParse normaliza e filtra',iaT.length===1&&iaT[0].utilizado===10267.38&&iaT[0].debitos[0].darf==='8109-02'&&iaT[0].iniDoc==='11111.00000.000000.1.3.15-0000');
   // lançamento automático pela IA (offline durante o teste: nada vai ao servidor)
   var _on=online;online=false;
   _iaUltimo=[{numero:'88888.77777.170726.1.3.15-0001',tipo:'Teste IA',competencia:'06/2026',credito:1000,utilizado:400,saldo:600,data:'17/07/2026',debitos:[{darf:'8109-02',descricao:'PIS',valor:400}]}];
