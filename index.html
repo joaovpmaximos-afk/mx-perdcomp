@@ -1653,6 +1653,8 @@ function maybeTest(){
   if(location.search.indexOf('teste=1')<0)return;
   var pass=0,fail=0,logs=[];
   function ok(name,cond){if(cond){pass++;}else{fail++;logs.push('✗ '+name);}}
+  // fila de sincronização em sandbox: lançamentos DE TESTE jamais vão ao servidor
+  var _pendBak=pend;pend=[];
   // reseed limpo para números determinísticos
   seedState();
   ok('19 créditos importados',state.creditos.length===19);
@@ -1710,6 +1712,7 @@ function maybeTest(){
   ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
   ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
   ok('fmtComp 2026-05',fmtComp('2026-05')==='mai/2026');
+  pend=_pendBak;pendSave(); // restaura a fila real
   var box=document.createElement('div');
   box.style.cssText='position:fixed;top:10px;right:10px;z-index:9999;background:'+(fail?'#331717':'#123021')+';color:#fff;border:1px solid '+(fail?'#e05a5a':'#27ae60')+';padding:12px 16px;border-radius:10px;font:13px system-ui;box-shadow:0 8px 30px rgba(0,0,0,.4)';
   box.innerHTML='<b>Autoteste MX PERDCOMP</b><br>'+pass+' passaram · '+fail+' falharam'+(fail?'<br><small>'+logs.join('<br>')+'</small>':' ✓');
