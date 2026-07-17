@@ -272,6 +272,7 @@ footer.foot{max-width:1180px;margin:0 auto;padding:20px 18px 40px;color:var(--mu
   </nav>
 </header>
 
+<div id="syncBar" role="alert" style="display:none;position:sticky;top:0;z-index:90;background:var(--dang);color:#fff;padding:10px 16px;font-size:13px;font-weight:600;text-align:center"></div>
 <a class="skiplink" href="#conteudo">Pular para o conteúdo</a>
 <main id="conteudo" tabindex="-1">
   <!-- ===================== PAINEL ===================== -->
@@ -721,17 +722,28 @@ function loadSbLib(cb){
   s.onload=cb; s.onerror=function(){toast('Falha ao carregar biblioteca Supabase (sem internet?)',true);};
   document.head.appendChild(s);
 }
+var _reconTimer=null;
+function agendarReconexao(){
+  if(_reconTimer)return;
+  _reconTimer=setInterval(function(){
+    if(online){clearInterval(_reconTimer);_reconTimer=null;return;}
+    connectSupabase(function(ok){
+      if(ok){clearInterval(_reconTimer);_reconTimer=null;renderAll();toast('Reconectado à base da equipe');}
+    });
+  },30000);
+}
 function connectSupabase(cb){
   loadSbLib(function(){
     try{
       sb=window.supabase.createClient(cfg.url,cfg.key);
-      online=true;
       fetchRemote(function(ok){
-        setModeUI();
-        if(ok){subscribeRealtime();}
+        online=!!ok;               // só é "online" se os dados realmente vieram
+        setModeUI();bannerSync();
+        if(ok){subscribeRealtime();replayPend();}
+        else{agendarReconexao();}
         cb&&cb(ok);
       });
-    }catch(e){toast('Erro ao conectar: '+e.message,true);cb&&cb(false);}
+    }catch(e){online=false;setModeUI();bannerSync();agendarReconexao();toast('Erro ao conectar: '+e.message,true);cb&&cb(false);}
   });
 }
 
@@ -752,7 +764,7 @@ function subscribeRealtime(){
   }catch(e){}
   // rede caiu/voltou ou usuário voltou para a aba: garante estado fresco
   document.addEventListener('visibilitychange',function(){
-    if(online&&document.visibilityState==='visible') onRemoteChange();
+    if(online&&document.visibilityState==='visible'){onRemoteChange();replayPend();}
   });
 }
 function fetchRemote(cb){
@@ -773,10 +785,67 @@ function fetchRemote(cb){
 function mapCredFromDb(r){return {id:r.id,competencia:r.competencia,valor_original:r.valor_original,perd_inicial:r.perd_inicial,ultima_data:r.ultima_data,saldo_manual:r.saldo_manual,obs:r.obs,anexos:r.anexos||[]};}
 function mapCompFromDb(r){return {id:r.id,data:r.data,competencia_debito:r.competencia_debito,departamento:r.departamento,descricao:r.descricao,debitos:r.debitos||[],valor_total:r.valor_total,dcomp_inicial:r.dcomp_inicial,dcomp_resultante:r.dcomp_resultante,saldo_apos:r.saldo_apos,inis_internos:r.inis_internos||[],credito_id:r.credito_id,usuario:r.usuario,obs:r.obs,anexos:r.anexos||[],criado_em:r.criado_em};}
 
-function upsertCredRemote(cr){ if(!online)return Promise.resolve(); var o={id:cr.id,empresa:cfg.empresa,competencia:cr.competencia,valor_original:cr.valor_original,perd_inicial:cr.perd_inicial,ultima_data:cr.ultima_data||null,saldo_manual:cr.saldo_manual===''?null:cr.saldo_manual,obs:cr.obs,anexos:cr.anexos||[]}; return sb.from('perdcomp_creditos').upsert(o); }
-function upsertCompRemote(c){ if(!online)return Promise.resolve(); var o={id:c.id,empresa:cfg.empresa,data:c.data||null,competencia_debito:c.competencia_debito,departamento:c.departamento,descricao:c.descricao,debitos:c.debitos,valor_total:c.valor_total,dcomp_inicial:c.dcomp_inicial,dcomp_resultante:c.dcomp_resultante,saldo_apos:c.saldo_apos,inis_internos:c.inis_internos||[],credito_id:c.credito_id,usuario:c.usuario,obs:c.obs,anexos:c.anexos||[],criado_em:c.criado_em}; return sb.from('perdcomp_compensacoes').upsert(o); }
-function delCredRemote(id){ if(!online)return Promise.resolve(); return sb.from('perdcomp_creditos').delete().eq('id',id); }
-function delCompRemote(id){ if(!online)return Promise.resolve(); return sb.from('perdcomp_compensacoes').delete().eq('id',id); }
+/* ===== Sincronização garantida: nenhuma gravação falha em silêncio =====
+   Toda gravação remota é verificada; se falhar (rede/servidor), o dado entra
+   numa fila persistente (localStorage), um aviso vermelho aparece e o app
+   reenvia sozinho até conseguir. */
+var pend=[];try{pend=JSON.parse(localStorage.getItem('mxperdcomp_pend')||'[]');}catch(e){pend=[];}
+function pendSave(){try{localStorage.setItem('mxperdcomp_pend',JSON.stringify(pend));}catch(e){}bannerSync();}
+function addPend(t,o){
+  pend=pend.filter(function(x){return !(x.t===t&&((x.o&&x.o.id)===(o&&o.id)||x.o===o));});
+  pend.push({t:t,o:o});pendSave();
+  toast('Falha ao gravar no servidor — guardei a alteração e vou reenviar sozinho',true);
+}
+function bannerSync(){
+  var b=$('#syncBar');if(!b)return;
+  if(cfg.url&&!online){b.style.display='block';b.textContent='⚠ Sem conexão com a base da equipe — tentando reconectar… O que você lançar agora será enviado quando voltar.';return;}
+  if(pend.length){b.style.display='block';b.textContent='⚠ '+pend.length+' alteração(ões) ainda não sincronizada(s) com a equipe — reenviando automaticamente…';return;}
+  b.style.display='none';
+}
+var _replayLock=false;
+function replayPend(cb){
+  if(_replayLock||!online||!sb||!pend.length){cb&&cb();return;}
+  _replayLock=true;
+  var fila=pend.slice();
+  function passo(i){
+    if(i>=fila.length){_replayLock=false;pendSave();renderAll();cb&&cb();return;}
+    var it=fila[i];
+    var pr=it.t==='comp'?sb.from('perdcomp_compensacoes').upsert(it.o):
+           it.t==='cred'?sb.from('perdcomp_creditos').upsert(it.o):
+           it.t==='delComp'?sb.from('perdcomp_compensacoes').delete().eq('id',it.o):
+           sb.from('perdcomp_creditos').delete().eq('id',it.o);
+    pr.then(function(r){
+      if(!r||!r.error){pend=pend.filter(function(x){return x!==it&&JSON.stringify(x)!==JSON.stringify(it);});}
+      passo(i+1);
+    },function(){passo(i+1);});
+  }
+  passo(0);
+}
+function esperaOnline(){return cfg.url&&cfg.key;} // deveria estar conectado
+function guard(t,payload,promessa){
+  return promessa.then(function(r){
+    if(r&&r.error){addPend(t,payload);}
+    return r;
+  },function(){addPend(t,payload);});
+}
+function upsertCredRemote(cr){
+  var o={id:cr.id,empresa:cfg.empresa,competencia:cr.competencia,valor_original:cr.valor_original,perd_inicial:cr.perd_inicial,ultima_data:cr.ultima_data||null,saldo_manual:cr.saldo_manual===''?null:cr.saldo_manual,obs:cr.obs,anexos:cr.anexos||[]};
+  if(!online){if(esperaOnline())addPend('cred',o);return Promise.resolve();}
+  return guard('cred',o,sb.from('perdcomp_creditos').upsert(o));
+}
+function upsertCompRemote(c){
+  var o={id:c.id,empresa:cfg.empresa,data:c.data||null,competencia_debito:c.competencia_debito,departamento:c.departamento,descricao:c.descricao,debitos:c.debitos,valor_total:c.valor_total,dcomp_inicial:c.dcomp_inicial,dcomp_resultante:c.dcomp_resultante,saldo_apos:c.saldo_apos,inis_internos:c.inis_internos||[],credito_id:c.credito_id,usuario:c.usuario,obs:c.obs,anexos:c.anexos||[],criado_em:c.criado_em};
+  if(!online){if(esperaOnline())addPend('comp',o);return Promise.resolve();}
+  return guard('comp',o,sb.from('perdcomp_compensacoes').upsert(o));
+}
+function delCredRemote(id){
+  if(!online){if(esperaOnline())addPend('delCred',id);return Promise.resolve();}
+  return guard('delCred',id,sb.from('perdcomp_creditos').delete().eq('id',id));
+}
+function delCompRemote(id){
+  if(!online){if(esperaOnline())addPend('delComp',id);return Promise.resolve();}
+  return guard('delComp',id,sb.from('perdcomp_compensacoes').delete().eq('id',id));
+}
 
 /* ---------- Navegação ---------- */
 function go(tab){
@@ -1632,6 +1701,11 @@ function maybeTest(){
   var okAuto=iaAutoLancar('comp',{numero:'77777.66666.170726.1.3.15-0002',tipo:'Teste Auto',competencia:'06/2026',saldo:800,data:'17/07/2026',debitos:[{darf:'8109-02',descricao:'PIS',valor:200}]});
   ok('IA lança sozinha ao ler o PDF no formulário',okAuto===true&&state.compensacoes.length===n0+1);
   state.compensacoes.pop();
+  // gravação nunca falha em silêncio: sem conexão (mas configurado), entra na fila
+  var pend0=pend.length;var cfgUrl0=cfg.url;cfg.url='https://x';
+  upsertCompRemote({id:'PEND-TST',debitos:[],valor_total:0});
+  ok('gravação sem conexão vai para a fila de reenvio',pend.length===pend0+1);
+  pend=pend.filter(function(x){return !(x.o&&x.o.id==='PEND-TST');});pendSave();cfg.url=cfgUrl0;
   _iaUltimo=[];online=_on;
   ok('parseNum R$ 1.234,56',Math.abs(parseNum('R$ 1.234,56')-1234.56)<0.01);
   ok('BRL formata',BRL(1234.5).indexOf('1.234,50')>=0);
